@@ -2,11 +2,12 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Box, Repeat, Wrench, AlertCircle } from "lucide-react"
+import { Box, MapPin, CheckCircle2, AlertCircle } from "lucide-react"
+import { MACHINES } from "@/lib/mock-data"
 
 interface StatsCardProps {
   title: string
-  value: string
+  value: string | number
   description: string
   icon: React.ElementType
   color: string
@@ -30,35 +31,40 @@ function StatCard({ title, value, description, icon: Icon, color }: StatsCardPro
 }
 
 export function DashboardStats() {
+  const totalMachines = MACHINES.length
+  const uniqueLocations = new Set(MACHINES.map(m => m.location)).size
+  const operational = MACHINES.filter(m => m.status === 'Operational').length
+  const down = MACHINES.filter(m => m.status === 'Down').length
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatCard
         title="Total Machines"
-        value="42"
-        description="+2 since last month"
+        value={totalMachines}
+        description="Across all departments"
         icon={Box}
         color="bg-primary"
       />
       <StatCard
-        title="Active Transfers"
-        value="8"
-        description="4 scheduled for today"
-        icon={Repeat}
+        title="Active Locations"
+        value={uniqueLocations}
+        description="Functional work zones"
+        icon={MapPin}
         color="bg-accent"
       />
       <StatCard
-        title="Maintenance Due"
-        value="12"
-        description="3 urgent tasks pending"
-        icon={Wrench}
-        color="bg-yellow-500"
+        title="Operational"
+        value={operational}
+        description="Ready for production"
+        icon={CheckCircle2}
+        color="bg-green-600"
       />
       <StatCard
-        title="System Status"
-        value="98.2%"
-        description="Machine uptime efficiency"
+        title="Offline / Issues"
+        value={down}
+        description="Requires attention"
         icon={AlertCircle}
-        color="bg-green-500"
+        color="bg-destructive"
       />
     </div>
   )

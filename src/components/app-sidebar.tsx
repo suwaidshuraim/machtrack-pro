@@ -7,9 +7,6 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   Box,
-  Repeat,
-  Wrench,
-  QrCode,
   Settings,
   HelpCircle,
   Factory
@@ -27,10 +24,8 @@ import {
 } from "@/components/ui/sidebar"
 
 const mainNav = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Machines", url: "/machines", icon: Box },
-  { title: "Transfers", url: "/transfers", icon: Repeat },
-  { title: "Maintenance", url: "/maintenance", icon: Wrench },
+  { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Machine Inventory", url: "/machines", icon: Box },
 ]
 
 export function AppSidebar() {
@@ -44,8 +39,8 @@ export function AppSidebar() {
             <Factory className="size-6" />
           </div>
           <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-            <span className="font-bold text-lg leading-tight tracking-tight text-sidebar-foreground">MachTrack Pro</span>
-            <span className="text-xs text-sidebar-foreground/60">Manufacturing Tracking</span>
+            <span className="font-bold text-lg leading-tight tracking-tight text-sidebar-foreground">MachTrack</span>
+            <span className="text-xs text-sidebar-foreground/60">Asset Management</span>
           </div>
         </div>
       </SidebarHeader>
@@ -56,7 +51,7 @@ export function AppSidebar() {
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname.startsWith(item.url)}
+                isActive={pathname === item.url}
                 tooltip={item.title}
                 className="transition-all duration-200"
               >
@@ -71,12 +66,6 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-4">
         <SidebarMenu>
-           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Quick Scan">
-              <QrCode className="size-5" />
-              <span className="font-medium group-data-[collapsible=icon]:hidden">Quick Scan QR</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Settings">
               <Settings className="size-5" />
