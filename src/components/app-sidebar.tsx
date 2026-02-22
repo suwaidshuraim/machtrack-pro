@@ -9,7 +9,8 @@ import {
   Box,
   Settings,
   HelpCircle,
-  Factory
+  Factory,
+  QrCode
 } from "lucide-react"
 
 import {
@@ -24,8 +25,9 @@ import {
 } from "@/components/ui/sidebar"
 
 const mainNav = [
-  { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Machine Inventory", url: "/machines", icon: Box },
+  { title: "Scan & Transfer", url: "/transfer/scan", icon: QrCode },
 ]
 
 export function AppSidebar() {
@@ -40,7 +42,7 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
             <span className="font-bold text-lg leading-tight tracking-tight text-sidebar-foreground">MachTrack</span>
-            <span className="text-xs text-sidebar-foreground/60">Asset Management</span>
+            <span className="text-xs text-sidebar-foreground/60">Asset Pro</span>
           </div>
         </div>
       </SidebarHeader>

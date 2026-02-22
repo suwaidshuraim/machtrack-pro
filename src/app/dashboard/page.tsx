@@ -10,136 +10,110 @@ import {
   CardTitle 
 } from "@/components/ui/card"
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table"
-import { 
-  Bar, 
-  BarChart, 
   ResponsiveContainer, 
-  XAxis, 
-  YAxis, 
-  Tooltip,
-  Cell
+  PieChart, 
+  Pie, 
+  Cell, 
+  Tooltip as ChartTooltip,
+  Legend
 } from "recharts"
-import { MACHINES } from "@/lib/mock-data"
+import { MACHINES, TRANSFERS } from "@/lib/mock-data"
+import { Badge } from "@/components/ui/badge"
+import { ArrowRightLeft, History } from "lucide-react"
+import Link from "next/link"
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function DashboardPage() {
-  // Calculate machines per location
-  const locationCounts = MACHINES.reduce((acc, machine) => {
-    acc[machine.location] = (acc[machine.location] || 0) + 1
+  // Machine Type Data
+  const typeCounts = MACHINES.reduce((acc, machine) => {
+    acc[machine.type] = (acc[machine.type] || 0) + 1
     return acc
   }, {} as Record<string, number>)
 
-  const chartData = Object.entries(locationCounts).map(([name, value]) => ({
-    name,
-    value,
-    color: "hsl(var(--primary))"
-  }))
+  const typeData = Object.entries(typeCounts).map(([name, value]) => ({ name, value }))
+
+  // Recent Activity
+  const recentTransfers = [...TRANSFERS].sort((a, b) => 
+    new Date(b.transferDate).getTime() - new Date(a.transferDate).getTime()
+  ).slice(0, 5)
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">System Overview</h2>
-        <p className="text-muted-foreground">Monitoring machine quantity and location distribution.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">System Status</h2>
+          <p className="text-muted-foreground">Overview of all factory assets and recent movements.</p>
+        </div>
       </div>
 
       <DashboardStats />
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
           <CardHeader>
-            <CardTitle>Machine Distribution by Location</CardTitle>
-            <CardDescription>Visual breakdown of how many machines are in each area.</CardDescription>
+            <CardTitle>Machine Type Distribution</CardTitle>
+            <CardDescription>Breakdown of assets by their functional category.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="h-[300px] w-full mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} layout="vertical">
-                  <XAxis type="number" hide />
-                  <YAxis 
-                    dataKey="name" 
-                    type="category" 
-                    stroke="#888888" 
-                    fontSize={11} 
-                    tickLine={false} 
-                    axisLine={false}
-                    width={150}
-                  />
-                  <Tooltip cursor={{fill: 'transparent'}} />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={32}>
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} fillOpacity={0.8} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={typeData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {typeData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <ChartTooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-3">
+        <Card>
           <CardHeader>
-            <CardTitle>Location Summary</CardTitle>
-            <CardDescription>Total counts per department.</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Recent Machine History</CardTitle>
+                <CardDescription>Latest location transfers across the facility.</CardDescription>
+              </div>
+              <History className="size-5 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {Object.entries(locationCounts).map(([location, count]) => (
-                <div key={location} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                  <span className="font-medium text-sm">{location}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold">{count}</span>
-                    <span className="text-xs text-muted-foreground">machines</span>
+              {recentTransfers.map((transfer) => (
+                <div key={transfer.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                  <div className="flex flex-col gap-1">
+                    <span className="font-semibold text-sm">{transfer.machineName}</span>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>{transfer.fromLocation}</span>
+                      <ArrowRightLeft className="size-3" />
+                      <span className="text-accent font-medium">{transfer.toLocation}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <Badge variant="outline" className="text-[10px]">{transfer.transferDate}</Badge>
                   </div>
                 </div>
               ))}
             </div>
+            <div className="mt-6">
+               <Link href="/machines" className="text-sm text-primary hover:underline font-medium">
+                  View full inventory records →
+               </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Global Machine List</CardTitle>
-          <CardDescription>Quick view of every asset and its current location.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Asset Name</TableHead>
-                <TableHead>Current Location</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Serial #</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {MACHINES.map((machine) => (
-                <TableRow key={machine.id}>
-                  <TableCell className="font-medium">{machine.name}</TableCell>
-                  <TableCell>{machine.location}</TableCell>
-                  <TableCell>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                      machine.status === 'Operational' ? 'bg-green-100 text-green-700' : 
-                      'bg-orange-100 text-orange-700'
-                    }`}>
-                      {machine.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground font-mono text-xs">
-                    {machine.serialNumber}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
   )
 }

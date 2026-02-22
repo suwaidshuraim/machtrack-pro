@@ -2,7 +2,7 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Box, MapPin, CheckCircle2, AlertCircle } from "lucide-react"
+import { Box, Factory, Wrench, Warehouse } from "lucide-react"
 import { MACHINES } from "@/lib/mock-data"
 
 interface StatsCardProps {
@@ -15,15 +15,13 @@ interface StatsCardProps {
 
 function StatCard({ title, value, description, icon: Icon, color }: StatsCardProps) {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border-b-4" style={{ borderColor: color }}>
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <div className={`p-2 rounded-md ${color} text-white`}>
-          <Icon className="w-4 h-4" />
-        </div>
+        <Icon className="size-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-3xl font-bold">{value}</div>
         <p className="text-xs text-muted-foreground mt-1">{description}</p>
       </CardContent>
     </Card>
@@ -32,39 +30,39 @@ function StatCard({ title, value, description, icon: Icon, color }: StatsCardPro
 
 export function DashboardStats() {
   const totalMachines = MACHINES.length
-  const uniqueLocations = new Set(MACHINES.map(m => m.location)).size
-  const operational = MACHINES.filter(m => m.status === 'Operational').length
-  const down = MACHINES.filter(m => m.status === 'Down').length
+  const activeCount = MACHINES.filter(m => m.status === 'Operational' && m.location !== 'Machine Bank').length
+  const repairCount = MACHINES.filter(m => m.status === 'Down' || m.status === 'In Maintenance').length
+  const bankCount = MACHINES.filter(m => m.location === 'Machine Bank').length
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatCard
-        title="Total Machines"
+        title="Total Assets"
         value={totalMachines}
-        description="Across all departments"
+        description="Global inventory"
         icon={Box}
-        color="bg-primary"
+        color="hsl(var(--primary))"
       />
       <StatCard
-        title="Active Locations"
-        value={uniqueLocations}
-        description="Functional work zones"
-        icon={MapPin}
-        color="bg-accent"
+        title="Active in Production"
+        value={activeCount}
+        description="Operational units"
+        icon={Factory}
+        color="#22c55e"
       />
       <StatCard
-        title="Operational"
-        value={operational}
-        description="Ready for production"
-        icon={CheckCircle2}
-        color="bg-green-600"
+        title="In Machine Bank"
+        value={bankCount}
+        description="Available for deployment"
+        icon={Warehouse}
+        color="hsl(var(--accent))"
       />
       <StatCard
-        title="Offline / Issues"
-        value={down}
-        description="Requires attention"
-        icon={AlertCircle}
-        color="bg-destructive"
+        title="Needs Repair"
+        value={repairCount}
+        description="Down or Scheduled"
+        icon={Wrench}
+        color="#ef4444"
       />
     </div>
   )
