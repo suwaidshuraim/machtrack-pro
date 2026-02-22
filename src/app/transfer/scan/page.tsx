@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -20,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 import { MACHINES } from "@/lib/mock-data"
 import { Machine } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
