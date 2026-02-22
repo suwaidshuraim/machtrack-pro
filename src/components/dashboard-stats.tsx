@@ -30,23 +30,26 @@ function StatCard({ title, value, description, icon: Icon, color }: StatsCardPro
 
 export function DashboardStats() {
   const totalMachines = MACHINES.length
+  // Active/Allotted: Operational status and not in the Machine Bank
   const activeCount = MACHINES.filter(m => m.status === 'Operational' && m.location !== 'Machine Bank').length
-  const repairCount = MACHINES.filter(m => m.status === 'Down' || m.status === 'In Maintenance').length
+  // Breakdown/Needs Repair: Status is Down
+  const breakdownCount = MACHINES.filter(m => m.status === 'Down').length
+  // Machine Bank: Specifically located in the Machine Bank
   const bankCount = MACHINES.filter(m => m.location === 'Machine Bank').length
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatCard
-        title="Total Assets"
+        title="Total Machines"
         value={totalMachines}
-        description="Global inventory"
+        description="Global company inventory"
         icon={Box}
         color="hsl(var(--primary))"
       />
       <StatCard
-        title="Active in Production"
+        title="Active (Allotted)"
         value={activeCount}
-        description="Operational units"
+        description="Currently in production"
         icon={Factory}
         color="#22c55e"
       />
@@ -58,9 +61,9 @@ export function DashboardStats() {
         color="hsl(var(--accent))"
       />
       <StatCard
-        title="Needs Repair"
-        value={repairCount}
-        description="Down or Scheduled"
+        title="Breakdown"
+        value={breakdownCount}
+        description="Down and non-functional"
         icon={Wrench}
         color="#ef4444"
       />

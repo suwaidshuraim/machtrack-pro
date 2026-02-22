@@ -2,34 +2,34 @@
 {
   "placeholderImages": [
     {
-      "id": "machine-1",
-      "description": "Industrial CNC Milling Machine",
-      "imageUrl": "https://picsum.photos/seed/cnc/800/600",
-      "imageHint": "cnc machine industrial"
+      "id": "flat-bed",
+      "description": "Flat Bed Industrial Sewing Machine",
+      "imageUrl": "https://picsum.photos/seed/flatbed/400/300",
+      "imageHint": "industrial sewing machine"
     },
     {
-      "id": "machine-2",
-      "description": "Large Robotic Arm for Assembly",
-      "imageUrl": "https://picsum.photos/seed/robot/800/600",
-      "imageHint": "robotic arm assembly"
+      "id": "cylinder-bed",
+      "description": "Cylinder Bed Sewing Machine",
+      "imageUrl": "https://picsum.photos/seed/cylinder/400/300",
+      "imageHint": "cylinder bed machine"
     },
     {
-      "id": "machine-3",
-      "description": "Conveyor Belt System",
-      "imageUrl": "https://picsum.photos/seed/conveyor/800/600",
-      "imageHint": "conveyor belt factory"
+      "id": "ams",
+      "description": "AMS Automated Pattern Machine",
+      "imageUrl": "https://picsum.photos/seed/ams/400/300",
+      "imageHint": "automated machinery"
     },
     {
-      "id": "machine-4",
-      "description": "Hydraulic Press",
-      "imageUrl": "https://picsum.photos/seed/press/800/600",
-      "imageHint": "hydraulic press machine"
+      "id": "embossing",
+      "description": "Industrial Embossing Press",
+      "imageUrl": "https://picsum.photos/seed/emboss/400/300",
+      "imageHint": "embossing machine"
     },
     {
-      "id": "machine-5",
-      "description": "Laser Cutting Machine",
-      "imageUrl": "https://picsum.photos/seed/laser/800/600",
-      "imageHint": "laser cutting machine"
+      "id": "pressing",
+      "description": "Industrial Hydraulic Pressing Machine",
+      "imageUrl": "https://picsum.photos/seed/press/400/300",
+      "imageHint": "pressing machine industrial"
     }
   ]
 }
