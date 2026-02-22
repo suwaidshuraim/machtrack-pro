@@ -1,4 +1,3 @@
-
 "use client"
 
 import { DashboardStats } from "@/components/dashboard-stats"
@@ -14,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowRightLeft, History } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { Button } from "@/components/ui/button"
 
 const MACHINE_TYPE_METADATA: Record<string, { image: string, hint: string }> = {
   'Flat Bed': { image: 'https://picsum.photos/seed/flatbed/400/300', hint: 'sewing machine' },
@@ -114,7 +114,7 @@ export default function DashboardPage() {
             </div>
             <div className="mt-6">
                <Link href="/machines" className="text-sm text-primary hover:underline font-medium">
-                  View full inventory records →
+                  View full machine history →
                </Link>
             </div>
           </CardContent>
@@ -131,5 +131,3 @@ export default function DashboardPage() {
     </div>
   )
 }
-
-import { Button } from "@/components/ui/button"

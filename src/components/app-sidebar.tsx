@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -26,7 +25,7 @@ import {
 
 const mainNav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Machine Inventory", url: "/machines", icon: Box },
+  { title: "Machine History", url: "/machines", icon: Box },
   { title: "Scan & Transfer", url: "/transfer/scan", icon: QrCode },
 ]
 

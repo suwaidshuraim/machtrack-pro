@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -21,7 +20,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, Box, ChevronRight, Plus, Filter } from "lucide-react"
+import { Search, ChevronRight, Plus, Filter } from "lucide-react"
 import { MACHINES } from "@/lib/mock-data"
 
 export default function MachinesPage() {
@@ -37,7 +36,7 @@ export default function MachinesPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Machine Inventory</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Machine History</h2>
           <p className="text-muted-foreground">Manage and track all manufacturing assets across locations.</p>
         </div>
         <div className="flex items-center gap-2">
