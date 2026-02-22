@@ -5,68 +5,46 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Box, Factory, Wrench, Warehouse } from "lucide-react"
 import { MACHINES } from "@/lib/mock-data"
 
-interface StatsCardProps {
-  title: string
-  value: string | number
-  description: string
-  icon: React.ElementType
-  color: string
-}
-
-function StatCard({ title, value, description, icon: Icon, color }: StatsCardProps) {
-  return (
-    <Card className="overflow-hidden border-b-4" style={{ borderColor: color }}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <Icon className="size-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground mt-1">{description}</p>
-      </CardContent>
-    </Card>
-  )
-}
-
 export function DashboardStats() {
   const totalMachines = MACHINES.length
-  // Active/Allotted: Operational status and not in the Machine Bank
-  const activeCount = MACHINES.filter(m => m.status === 'Operational' && m.location !== 'Machine Bank').length
-  // Breakdown/Needs Repair: Status is Down
-  const breakdownCount = MACHINES.filter(m => m.status === 'Down').length
-  // Machine Bank: Specifically located in the Machine Bank
+  const activeCount = MACHINES.filter(m => m.status === 'Operational').length
+  const breakdownCount = MACHINES.filter(m => m.status === 'Down' || m.status === 'In Maintenance').length
   const bankCount = MACHINES.filter(m => m.location === 'Machine Bank').length
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <StatCard
-        title="Total Machines"
-        value={totalMachines}
-        description="Global company inventory"
-        icon={Box}
-        color="hsl(var(--primary))"
-      />
-      <StatCard
-        title="Active (Allotted)"
-        value={activeCount}
-        description="Currently in production"
-        icon={Factory}
-        color="#22c55e"
-      />
-      <StatCard
-        title="In Machine Bank"
-        value={bankCount}
-        description="Available for deployment"
-        icon={Warehouse}
-        color="hsl(var(--accent))"
-      />
-      <StatCard
-        title="Breakdown"
-        value={breakdownCount}
-        description="Down and non-functional"
-        icon={Wrench}
-        color="#ef4444"
-      />
+    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+      <Card className="border-none shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{totalMachines}</div>
+        </CardContent>
+      </Card>
+      <Card className="border-none shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xs font-medium text-green-600 uppercase tracking-wider">Running</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-green-600">{activeCount}</div>
+        </CardContent>
+      </Card>
+      <Card className="border-none shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xs font-medium text-blue-600 uppercase tracking-wider">Bank</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-blue-600">{bankCount}</div>
+        </CardContent>
+      </Card>
+      <Card className="border-none shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-xs font-medium text-red-500 uppercase tracking-wider">Repair</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-red-500">{breakdownCount}</div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -1,133 +1,169 @@
+
 "use client"
 
-import { DashboardStats } from "@/components/dashboard-stats"
+import { Card, CardContent } from "@/components/ui/card"
+import { MACHINES } from "@/lib/mock-data"
 import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card"
-import { MACHINES, TRANSFERS } from "@/lib/mock-data"
-import { Badge } from "@/components/ui/badge"
-import { ArrowRightLeft, History } from "lucide-react"
+  Plus, 
+  Repeat, 
+  History, 
+  LayoutGrid, 
+  ChevronRight, 
+  Wrench, 
+  Factory, 
+  Warehouse,
+  AlertCircle
+} from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
-const MACHINE_TYPE_METADATA: Record<string, { image: string, hint: string }> = {
-  'Flat Bed': { image: 'https://picsum.photos/seed/flatbed/400/300', hint: 'sewing machine' },
-  'Cylinder Bed': { image: 'https://picsum.photos/seed/cylinder/400/300', hint: 'heavy machine' },
-  'AMS': { image: 'https://picsum.photos/seed/ams/400/300', hint: 'automated machine' },
-  'Embossing': { image: 'https://picsum.photos/seed/emboss/400/300', hint: 'emboss machine' },
-  'Pressing': { image: 'https://picsum.photos/seed/press/400/300', hint: 'press machine' },
-}
+const MACHINE_TYPES = [
+  { name: 'Flat Bed', icon: 'https://picsum.photos/seed/flatbed/400/300', color: 'bg-green-500' },
+  { name: 'Cylinder', icon: 'https://picsum.photos/seed/cylinder/400/300', color: 'bg-blue-500' },
+  { name: 'High Post', icon: 'https://picsum.photos/seed/highpost/400/300', color: 'bg-blue-600' },
+  { name: 'AMS', icon: 'https://picsum.photos/seed/ams/400/300', color: 'bg-green-600' },
+  { name: 'Overlock', icon: 'https://picsum.photos/seed/overlock/400/300', color: 'bg-orange-500' },
+  { name: 'Others', icon: 'https://picsum.photos/seed/generic/400/300', color: 'bg-blue-400' },
+]
 
 export default function DashboardPage() {
-  // Machine Type Counts
-  const typeCounts = MACHINES.reduce((acc, machine) => {
-    acc[machine.type] = (acc[machine.type] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
+  const totalCount = MACHINES.length
+  const runningCount = MACHINES.filter(m => m.status === 'Operational').length
+  const bankCount = MACHINES.filter(m => m.location === 'Machine Bank').length
+  const repairCount = MACHINES.filter(m => m.status === 'Down' || m.status === 'In Maintenance').length
 
-  const typeData = Object.entries(typeCounts).map(([name, value]) => ({ 
-    name, 
-    value,
-    ...MACHINE_TYPE_METADATA[name] || { image: 'https://picsum.photos/seed/generic/400/300', hint: 'industrial machine' }
-  }))
-
-  // Recent Activity
-  const recentTransfers = [...TRANSFERS].sort((a, b) => 
-    new Date(b.transferDate).getTime() - new Date(a.transferDate).getTime()
-  ).slice(0, 5)
+  const getTypeStats = (typeName: string) => {
+    const filtered = MACHINES.filter(m => m.type === typeName)
+    return {
+      total: filtered.length,
+      running: filtered.filter(m => m.status === 'Operational').length
+    }
+  }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Factory Overview</h2>
-          <p className="text-muted-foreground">Real-time status and distribution of all factory assets.</p>
-        </div>
-      </div>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Top Stats Bar */}
+      <Card className="border-none shadow-md bg-white/80 backdrop-blur">
+        <CardContent className="p-4 flex items-center justify-around">
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground font-medium">Total Machines</p>
+            <p className="text-2xl font-bold">{totalCount}</p>
+          </div>
+          <div className="h-8 w-px bg-border mx-2" />
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground font-medium">Running</p>
+            <p className="text-2xl font-bold text-green-600">{runningCount}</p>
+          </div>
+          <div className="h-8 w-px bg-border mx-2" />
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground font-medium">Bank</p>
+            <p className="text-2xl font-bold text-blue-600">{bankCount}</p>
+          </div>
+          <div className="h-8 w-px bg-border mx-2" />
+          <div className="text-center">
+            <p className="text-xs text-muted-foreground font-medium">Repair</p>
+            <p className="text-2xl font-bold text-red-500">{repairCount}</p>
+          </div>
+        </CardContent>
+      </Card>
 
-      <DashboardStats />
-
-      <div>
-        <h3 className="text-xl font-bold mb-4">Machine Fleet by Type</h3>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {typeData.map((type) => (
-            <Card key={type.name} className="overflow-hidden hover:shadow-md transition-shadow">
-              <div className="relative h-32 w-full">
-                <Image 
-                  src={type.image} 
-                  alt={type.name} 
-                  fill 
-                  className="object-cover" 
-                  data-ai-hint={type.hint}
-                />
-              </div>
-              <CardHeader className="p-4 pb-2">
-                <CardTitle className="text-base">{type.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold">{type.value}</span>
-                  <Badge variant="outline">Units</Badge>
+      {/* Machine Type Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {MACHINE_TYPES.map((type) => {
+          const stats = getTypeStats(type.name)
+          return (
+            <Card key={type.name} className="overflow-hidden border-none shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="p-0 flex items-center bg-white">
+                <div className="p-4 flex-1">
+                  <h3 className="font-bold text-lg mb-2">{type.name}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className={cn("size-2.5 rounded-full", type.color)} />
+                    <span className="text-sm font-semibold">{stats.running}</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Total <span className="font-bold text-foreground">{stats.total}</span>
+                  </div>
+                </div>
+                <div className="relative w-40 h-32">
+                  <Image 
+                    src={type.icon} 
+                    alt={type.name} 
+                    fill 
+                    className="object-cover"
+                    data-ai-hint="industrial machine"
+                  />
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          )
+        })}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Recent Movement History</CardTitle>
-                <CardDescription>Latest location transfers across the facility.</CardDescription>
+      {/* Action Buttons */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Link href="/machines">
+          <div className="flex items-center gap-4 p-5 rounded-2xl bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-colors">
+            <div className="p-2 bg-white/20 rounded-xl">
+              <LayoutGrid className="size-8" />
+            </div>
+            <div>
+              <p className="font-bold text-lg">Machine Master</p>
+              <p className="text-blue-100 text-xs">Add / Edit machine</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/machines">
+          <div className="flex items-center gap-4 p-5 rounded-2xl bg-slate-800 text-white shadow-lg hover:bg-slate-900 transition-colors">
+            <div className="p-2 bg-white/20 rounded-xl">
+              <Factory className="size-8" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <p className="font-bold text-lg">Line Master</p>
+                <span className="bg-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">Important</span>
               </div>
-              <History className="size-5 text-muted-foreground" />
+              <p className="text-slate-300 text-xs">Bgd • To M Line</p>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentTransfers.map((transfer) => (
-                <div key={transfer.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-sm">{transfer.machineName}</span>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{transfer.fromLocation}</span>
-                      <ArrowRightLeft className="size-3" />
-                      <span className="text-accent font-medium">{transfer.toLocation}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant="outline" className="text-[10px]">{transfer.transferDate}</Badge>
-                  </div>
-                </div>
-              ))}
-              {recentTransfers.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">No recent transfers recorded.</p>
-              )}
-            </div>
-            <div className="mt-6">
-               <Link href="/machines" className="text-sm text-primary hover:underline font-medium">
-                  View full machine history →
-               </Link>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </Link>
 
-        <Card className="bg-primary text-primary-foreground flex flex-col justify-center p-8">
-          <h3 className="text-2xl font-bold mb-2">Need to move an asset?</h3>
-          <p className="text-primary-foreground/80 mb-6">Use the mobile scanner to relocate machines instantly between production lines and the bank.</p>
-          <Button variant="secondary" asChild className="w-fit">
-            <Link href="/transfer/scan">Open Scan & Transfer</Link>
-          </Button>
-        </Card>
+        <Link href="/transfer/scan">
+          <div className="flex items-center gap-4 p-5 rounded-2xl bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 transition-colors">
+            <div className="p-2 bg-white/20 rounded-xl">
+              <Repeat className="size-8" />
+            </div>
+            <div>
+              <p className="font-bold text-lg">Machine Transfer</p>
+              <p className="text-emerald-100 text-xs">Relocate machine instantly</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/transfers">
+          <div className="flex items-center gap-4 p-5 rounded-2xl bg-amber-500 text-white shadow-lg hover:bg-amber-600 transition-colors">
+            <div className="p-2 bg-white/20 rounded-xl">
+              <History className="size-8" />
+            </div>
+            <div>
+              <p className="font-bold text-lg">Transfer History</p>
+              <p className="text-amber-100 text-xs">Date • Time log</p>
+            </div>
+          </div>
+        </Link>
       </div>
+
+      {/* Maintenance Banner */}
+      <Link href="/maintenance">
+        <div className="flex items-center justify-between p-4 bg-slate-100 rounded-xl border border-slate-200 hover:bg-slate-200 transition-colors">
+          <div className="flex items-center gap-3">
+            <Wrench className="size-5 text-slate-500" />
+            <span className="font-semibold text-slate-700">Maintenance / Repair</span>
+          </div>
+          <ChevronRight className="size-5 text-slate-400" />
+        </div>
+      </Link>
     </div>
   )
 }

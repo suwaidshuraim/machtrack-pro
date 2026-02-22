@@ -12,6 +12,7 @@ export interface Machine {
   lastInspectionDate: string;
   usageHistory: string;
   imageUrl: string;
+  runningCount?: number; // Added for UI display logic
 }
 
 export interface Transfer {
