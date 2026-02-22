@@ -24,7 +24,8 @@ import { MACHINES } from "@/lib/mock-data"
 import { Machine } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
-import { ArrowRight, QrCode, CheckCircle2 } from "lucide-react"
+import { ArrowRight, QrCode, CheckCircle2, Search, Keyboard } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const LOCATIONS = [
   "Production Floor A",
@@ -38,20 +39,27 @@ const LOCATIONS = [
 
 export default function ScanTransferPage() {
   const [scannedMachine, setScannedMachine] = useState<Machine | null>(null)
+  const [manualId, setManualId] = useState("")
   const [newLocation, setNewLocation] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
-  // Simulate finding a machine by ID (from a QR scan)
-  const handleSimulateScan = () => {
-    // For demo: picking a random machine
-    const randomMachine = MACHINES[Math.floor(Math.random() * MACHINES.length)]
-    setScannedMachine(randomMachine)
-    toast({
-      title: "Machine Identified",
-      description: `Detected: ${randomMachine.name} (${randomMachine.id})`,
-    })
+  const handleManualDetect = () => {
+    const machine = MACHINES.find(m => m.id.toUpperCase() === manualId.trim().toUpperCase())
+    if (machine) {
+      setScannedMachine(machine)
+      toast({
+        title: "Machine Identified",
+        description: `Found: ${machine.name} (${machine.id})`,
+      })
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Asset Not Found",
+        description: "Please check the ID and try again.",
+      })
+    }
   }
 
   const handleTransfer = () => {
@@ -73,30 +81,81 @@ export default function ScanTransferPage() {
     <div className="max-w-2xl mx-auto space-y-8">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">Machine Transfer</h2>
-        <p className="text-muted-foreground">Scan an asset QR code to update its location instantly.</p>
+        <p className="text-muted-foreground">Relocate an asset by scanning its QR code or entering the ID manually.</p>
       </div>
 
       {!scannedMachine ? (
-        <Card>
-          <CardHeader className="text-center">
-            <div className="mx-auto size-12 rounded-full bg-accent/10 flex items-center justify-center mb-4">
-              <QrCode className="size-6 text-accent" />
-            </div>
-            <CardTitle>Align QR Code</CardTitle>
-            <CardDescription>Position the machine's asset label within the frame below.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <CameraScanner onScan={(id) => console.log('Scanned ID:', id)} />
-            
-            <div className="flex flex-col items-center gap-4">
-              <p className="text-xs text-muted-foreground italic">Having trouble scanning? Try entering the ID manually.</p>
-              <div className="flex gap-2 w-full">
-                <Input placeholder="Enter Asset ID (e.g. MAC-001)" />
-                <Button variant="secondary" onClick={handleSimulateScan}>Detect</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="scan" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="scan" className="flex items-center gap-2">
+              <QrCode className="size-4" /> Scan QR
+            </TabsTrigger>
+            <TabsTrigger value="manual" className="flex items-center gap-2">
+              <Keyboard className="size-4" /> Manual Entry
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="scan">
+            <Card>
+              <CardHeader className="text-center">
+                <CardTitle>Align QR Code</CardTitle>
+                <CardDescription>Position the machine's asset label within the frame.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <CameraScanner onScan={(id) => {
+                  setManualId(id)
+                  handleManualDetect()
+                }} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="manual">
+            <Card>
+              <CardHeader>
+                <CardTitle>Enter Asset ID</CardTitle>
+                <CardDescription>Type the unique identifier located on the machine's nameplate.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="asset-id">Machine ID</Label>
+                    <div className="flex gap-2">
+                      <Input 
+                        id="asset-id"
+                        placeholder="e.g. MAC-001" 
+                        value={manualId}
+                        onChange={(e) => setManualId(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleManualDetect()}
+                      />
+                      <Button onClick={handleManualDetect}>
+                        <Search className="size-4 mr-2" />
+                        Detect
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <p className="text-xs text-muted-foreground mb-2">Available for testing:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {MACHINES.slice(0, 4).map(m => (
+                        <Badge 
+                          key={m.id} 
+                          variant="outline" 
+                          className="cursor-pointer hover:bg-muted"
+                          onClick={() => {
+                            setManualId(m.id)
+                          }}
+                        >
+                          {m.id}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       ) : (
         <Card className="animate-in fade-in slide-in-from-bottom-4">
           <CardHeader>
@@ -104,13 +163,14 @@ export default function ScanTransferPage() {
               <CheckCircle2 className="size-5 text-green-500" />
               Asset Verified
             </CardTitle>
-            <CardDescription>Confirm relocation details for the machine below.</CardDescription>
+            <CardDescription>Confirm relocation details for the identified machine.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-2 gap-4 bg-muted/50 p-4 rounded-lg border">
               <div>
                 <Label className="text-[10px] uppercase text-muted-foreground font-bold">Machine</Label>
                 <p className="font-semibold text-sm">{scannedMachine.name}</p>
+                <p className="text-xs text-muted-foreground">{scannedMachine.id}</p>
               </div>
               <div>
                 <Label className="text-[10px] uppercase text-muted-foreground font-bold">Current Location</Label>
@@ -140,8 +200,11 @@ export default function ScanTransferPage() {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button variant="outline" className="flex-1" onClick={() => setScannedMachine(null)}>
-                Rescan
+              <Button variant="outline" className="flex-1" onClick={() => {
+                setScannedMachine(null)
+                setManualId("")
+              }}>
+                Cancel / Reset
               </Button>
               <Button 
                 className="flex-1 bg-accent hover:bg-accent/90" 
