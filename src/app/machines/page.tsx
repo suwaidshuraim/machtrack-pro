@@ -86,7 +86,7 @@ export default function MachineMasterPage() {
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-lg">
                 <Box className="size-4 text-slate-500" />
-                <span className="text-sm font-bold text-slate-700">{MACHINES.length} Assets</span>
+                <span className="text-sm font-bold text-slate-700">{filteredMachines.length} Results</span>
               </div>
             </div>
           </div>
@@ -134,6 +134,13 @@ export default function MachineMasterPage() {
                   </TableCell>
                 </TableRow>
               ))}
+              {filteredMachines.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                    No machines found matching your search criteria.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -1,11 +1,13 @@
 
 "use client"
 
+import { useState } from "react"
 import { MACHINES } from "@/lib/mock-data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Factory, Plus, ChevronRight, LayoutGrid, ArrowLeft } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Factory, Plus, ChevronRight, LayoutGrid, ArrowLeft, Search } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -13,28 +15,45 @@ const PREDEFINED_LINES = ["Line 1", "Line 2", "Line 3", "Line 4", "Line 5"]
 
 export default function LineMasterPage() {
   const router = useRouter()
+  const [search, setSearch] = useState("")
+
+  const filteredLines = PREDEFINED_LINES.filter(line => 
+    line.toLowerCase().includes(search.toLowerCase())
+  )
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full">
             <ArrowLeft className="size-4" />
           </Button>
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-slate-900">Line Master</h2>
-            <p className="text-muted-foreground">Real-time machine allocation for production lines 1 through 5.</p>
+            <p className="text-muted-foreground">Real-time machine allocation for production lines.</p>
           </div>
         </div>
-        <Button className="bg-slate-800 hover:bg-slate-900 text-white shadow-lg" asChild>
-          <Link href="/lines/new">
-            <Plus className="mr-2 size-4" />
-            Add New Line
-          </Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search lines..." 
+              className="pl-9 h-10 w-48 md:w-64 bg-white"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <Button className="bg-slate-800 hover:bg-slate-900 text-white shadow-lg" asChild>
+            <Link href="/lines/new">
+              <Plus className="mr-2 size-4" />
+              Add New Line
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6">
-        {PREDEFINED_LINES.map((lineName) => {
+        {filteredLines.map((lineName) => {
           const lineMachines = MACHINES.filter(m => m.location === lineName)
           
           const typeCounts = lineMachines.reduce((acc, m) => {
@@ -42,7 +61,7 @@ export default function LineMasterPage() {
             return acc
           }, {} as Record<string, number>)
 
-          const activeCount = lineMachines.filter(m => m.status === 'Running').length
+          const activeCount = lineMachines.filter(m => m.status === 'Running' || m.status === 'Idle').length
           const serviceRequiredCount = lineMachines.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
 
           return (
@@ -60,7 +79,7 @@ export default function LineMasterPage() {
                       </span>
                       <div className="flex items-center gap-1.5">
                         <div className="size-2 rounded-full bg-green-500" />
-                        <span className="text-xs font-bold text-green-600">{activeCount} Running</span>
+                        <span className="text-xs font-bold text-green-600">{activeCount} Active</span>
                       </div>
                     </div>
                   </div>
@@ -94,9 +113,9 @@ export default function LineMasterPage() {
                         View All Assets
                       </Link>
                    </Button>
-                   <Button variant="outline" size="sm" className="rounded-xl" asChild>
+                   <Button variant="outline" size="sm" className="rounded-xl font-bold" asChild>
                       <Link href="/transfer/scan">
-                        Add Machine to {lineName}
+                        Relocate to {lineName}
                       </Link>
                    </Button>
                 </div>
@@ -104,6 +123,12 @@ export default function LineMasterPage() {
             </Card>
           )
         })}
+        {filteredLines.length === 0 && (
+          <div className="text-center py-20 bg-slate-50 rounded-2xl border-2 border-dashed">
+            <Factory className="size-12 text-slate-300 mx-auto mb-4" />
+            <p className="text-slate-500 font-bold">No production lines found matching "{search}"</p>
+          </div>
+        )}
       </div>
     </div>
   )
