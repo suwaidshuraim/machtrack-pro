@@ -36,7 +36,7 @@ import {
   ArrowLeft,
   Loader2
 } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
 
@@ -83,7 +83,7 @@ export default function ScanTransferPage() {
     // Log the transfer
     const transferData = {
       machineId: scannedMachine.id,
-      machineName: scannedMachine.name,
+      machineName: scannedMachine.name || scannedMachine.id,
       fromLocation: oldLocation,
       toLocation: newLocation,
       transferDate: new Date().toISOString(),
