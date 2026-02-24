@@ -20,19 +20,45 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, ChevronRight, Plus, Filter, Box, ArrowLeft } from "lucide-react"
+import { 
+  Search, 
+  ChevronRight, 
+  Plus, 
+  Filter, 
+  Box, 
+  ArrowLeft,
+  X
+} from "lucide-react"
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { MACHINES } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 
 export default function MachineMasterPage() {
   const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState("All")
   const router = useRouter()
 
-  const filteredMachines = MACHINES.filter(m => 
-    m.id.toLowerCase().includes(search.toLowerCase()) || 
-    m.type.toLowerCase().includes(search.toLowerCase()) ||
-    m.serialNumber.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredMachines = MACHINES.filter(m => {
+    const s = search.toLowerCase()
+    const matchesSearch = 
+      m.id.toLowerCase().includes(s) || 
+      m.type.toLowerCase().includes(s) ||
+      m.serialNumber.toLowerCase().includes(s) ||
+      m.location.toLowerCase().includes(s) ||
+      m.status.toLowerCase().includes(s)
+    
+    const matchesStatus = statusFilter === "All" || m.status === statusFilter
+    
+    return matchesSearch && matchesStatus
+  })
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -58,10 +84,27 @@ export default function MachineMasterPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="rounded-xl shadow-sm">
-            <Filter className="mr-2 size-4" />
-            Filter
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className={cn("rounded-xl shadow-sm", statusFilter !== "All" && "border-blue-500 bg-blue-50")}>
+                <Filter className="mr-2 size-4" />
+                {statusFilter === "All" ? "Filter Status" : statusFilter}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Running">Running</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Idle">Idle</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Bank">Bank</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Breakdown">Breakdown</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="Repair">Repair</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md" asChild>
             <Link href="/machines/new">
               <Plus className="mr-2 size-4" />
@@ -77,11 +120,19 @@ export default function MachineMasterPage() {
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Search by ID, Type or Serial..." 
+                placeholder="Search ID, Type, Serial, Location, or Status..." 
                 className="pl-10 h-11 bg-slate-50 border-none focus-visible:ring-1 focus-visible:ring-blue-200"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
+              {search && (
+                <button 
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-slate-900"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-lg">
@@ -137,7 +188,7 @@ export default function MachineMasterPage() {
               {filteredMachines.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                    No machines found matching your search criteria.
+                    No machines found matching your search or filter criteria.
                   </TableCell>
                 </TableRow>
               )}

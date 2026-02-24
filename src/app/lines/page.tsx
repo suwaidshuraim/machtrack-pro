@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Factory, Plus, ChevronRight, LayoutGrid, ArrowLeft, Search } from "lucide-react"
+import { Factory, Plus, LayoutGrid, ArrowLeft, Search, X } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -17,9 +17,20 @@ export default function LineMasterPage() {
   const router = useRouter()
   const [search, setSearch] = useState("")
 
-  const filteredLines = PREDEFINED_LINES.filter(line => 
-    line.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredLines = PREDEFINED_LINES.filter(lineName => {
+    const s = search.toLowerCase()
+    const lineMachines = MACHINES.filter(m => m.location === lineName)
+    
+    // Search in Line Name or any machine ID/Type/Serial in that line
+    const matchesLineName = lineName.toLowerCase().includes(s)
+    const matchesMachineInLine = lineMachines.some(m => 
+      m.id.toLowerCase().includes(s) || 
+      m.type.toLowerCase().includes(s) || 
+      m.serialNumber.toLowerCase().includes(s)
+    )
+    
+    return matchesLineName || matchesMachineInLine
+  })
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
@@ -37,11 +48,19 @@ export default function LineMasterPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input 
-              placeholder="Search lines..." 
+              placeholder="Search lines or assets..." 
               className="pl-9 h-10 w-48 md:w-64 bg-white"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            {search && (
+              <button 
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-slate-900"
+              >
+                <X className="size-3" />
+              </button>
+            )}
           </div>
           <Button className="bg-slate-800 hover:bg-slate-900 text-white shadow-lg" asChild>
             <Link href="/lines/new">
@@ -110,7 +129,7 @@ export default function LineMasterPage() {
                    <Button variant="ghost" size="sm" className="text-blue-600 font-bold hover:bg-blue-50" asChild>
                       <Link href="/machines">
                         <LayoutGrid className="mr-2 size-4" />
-                        View All Assets
+                        View Assets in {lineName}
                       </Link>
                    </Button>
                    <Button variant="outline" size="sm" className="rounded-xl font-bold" asChild>
