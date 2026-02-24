@@ -2,30 +2,55 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { MACHINES } from "@/lib/mock-data"
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { collection, query } from "firebase/firestore"
 import { 
   Repeat, 
   History, 
   LayoutGrid, 
   ChevronRight, 
   Wrench, 
-  Factory
+  Factory,
+  Loader2
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { Machine, MachineType } from "@/lib/types"
 
 export default function DashboardPage() {
-  // Statistics calculation based on specified categories
-  // Total = Active (Running/Idle) + Bank + Repair/Breakdown
-  const runningCount = MACHINES.filter(m => m.status === 'Running' || m.status === 'Idle').length
-  const bankCount = MACHINES.filter(m => m.status === 'Bank').length
-  const repairCount = MACHINES.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
-  
+  const firestore = useFirestore()
+
+  const machinesQuery = useMemoFirebase(() => {
+    if (!firestore) return null
+    return collection(firestore, "machines")
+  }, [firestore])
+
+  const { data: machines, loading: machinesLoading } = useCollection<Machine>(machinesQuery)
+
+  const typesQuery = useMemoFirebase(() => {
+    if (!firestore) return null
+    return collection(firestore, "machineTypes")
+  }, [firestore])
+
+  const { data: machineTypes, loading: typesLoading } = useCollection<MachineType>(typesQuery)
+
+  if (machinesLoading || typesLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  const safeMachines = machines || []
+  const runningCount = safeMachines.filter(m => m.status === 'Running' || m.status === 'Idle').length
+  const bankCount = safeMachines.filter(m => m.status === 'Bank').length
+  const repairCount = safeMachines.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
   const totalCount = runningCount + bankCount + repairCount
 
-  // Get unique types from the actual machine master
-  const availableTypes = Array.from(new Set(MACHINES.map(m => m.type)))
+  // Filter types to only those that actually have machines in the master
+  const activeTypeNames = Array.from(new Set(safeMachines.map(m => m.type)))
   
   const MACHINE_TYPE_METADATA: Record<string, { icon: string, color: string }> = {
     "Flat Bed": { icon: 'https://picsum.photos/seed/flatbed/400/300', color: 'bg-green-500' },
@@ -39,7 +64,7 @@ export default function DashboardPage() {
   }
 
   const getTypeStats = (typeName: string) => {
-    const filtered = MACHINES.filter(m => m.type === typeName)
+    const filtered = safeMachines.filter(m => m.type === typeName)
     return {
       total: filtered.length,
       running: filtered.filter(m => m.status === 'Running' || m.status === 'Idle').length
@@ -48,7 +73,6 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* Top Stats Bar */}
       <Card className="border-none shadow-md bg-white/80 backdrop-blur">
         <CardContent className="p-4 flex flex-col md:flex-row items-center justify-around gap-4 md:gap-0">
           <div className="text-center">
@@ -73,7 +97,6 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Main Action Hub - Now at the Top */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link href="/transfer/scan">
           <div className="flex items-center gap-4 p-5 rounded-2xl bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 transition-all hover:-translate-y-1">
@@ -130,12 +153,11 @@ export default function DashboardPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Types of Machines</h2>
-          <span className="text-xs font-bold text-muted-foreground uppercase">{availableTypes.length} Active Categories</span>
+          <span className="text-xs font-bold text-muted-foreground uppercase">{activeTypeNames.length} Active Categories</span>
         </div>
 
-        {/* Machine Type Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {availableTypes.map((typeName) => {
+          {activeTypeNames.map((typeName) => {
             const meta = MACHINE_TYPE_METADATA[typeName] || MACHINE_TYPE_METADATA["Others"]
             const stats = getTypeStats(typeName)
             return (
@@ -169,7 +191,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Maintenance Hub Quick Link */}
       <Link href="/maintenance">
         <div className="flex items-center justify-between p-5 bg-slate-100 rounded-2xl border border-slate-200 hover:bg-slate-200 transition-colors">
           <div className="flex items-center gap-4">

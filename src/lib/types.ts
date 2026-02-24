@@ -12,7 +12,15 @@ export interface Machine {
   lastInspectionDate: string;
   usageHistory: string;
   imageUrl: string;
-  runningCount?: number; 
+}
+
+export interface Line {
+  name: string;
+  supervisor?: string;
+}
+
+export interface MachineType {
+  name: string;
 }
 
 export interface Transfer {

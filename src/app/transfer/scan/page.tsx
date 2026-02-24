@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -19,10 +20,10 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { MACHINES } from "@/lib/mock-data"
-import { Machine } from "@/lib/types"
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { collection, doc, updateDoc, addDoc, query, where } from "firebase/firestore"
+import { Machine, Line } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import { 
@@ -32,20 +33,12 @@ import {
   Search, 
   Keyboard, 
   ListFilter,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
-const LOCATIONS = [
-  "Line 1",
-  "Line 2",
-  "Line 3",
-  "Line 4",
-  "Line 5",
-  "Machine Bank",
-  "Production Floor A",
-  "Fabrication Unit",
-]
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/tabs"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 export default function ScanTransferPage() {
   const [scannedMachine, setScannedMachine] = useState<Machine | null>(null)
@@ -55,43 +48,77 @@ export default function ScanTransferPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
+  const firestore = useFirestore()
+
+  const machinesQuery = useMemoFirebase(() => {
+    if (!firestore) return null
+    return collection(firestore, "machines")
+  }, [firestore])
+  const { data: machines, loading } = useCollection<Machine>(machinesQuery)
+
+  const linesQuery = useMemoFirebase(() => {
+    if (!firestore) return null
+    return collection(firestore, "lines")
+  }, [firestore])
+  const { data: lines } = useCollection<Line>(linesQuery)
 
   const handleDetect = (id: string) => {
-    const machine = MACHINES.find(m => m.id.toUpperCase() === id.trim().toUpperCase())
+    const machine = machines?.find(m => m.id.toUpperCase() === id.trim().toUpperCase())
     if (machine) {
       setScannedMachine(machine)
-      toast({
-        title: "Machine Identified",
-        description: `${machine.type} (${machine.id}) found at ${machine.location}`,
-      })
+      toast({ title: "Machine Identified", description: `${machine.type} (${machine.id}) found at ${machine.location}` })
     } else {
-      toast({
-        variant: "destructive",
-        title: "Asset Not Found",
-        description: "Please check the ID and try again.",
-      })
+      toast({ variant: "destructive", title: "Asset Not Found", description: "Please check the ID and try again." })
     }
   }
 
   const handleTransfer = () => {
-    if (!scannedMachine || !newLocation) return
+    if (!scannedMachine || !newLocation || !firestore) return
 
     setIsProcessing(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsProcessing(false)
-      toast({
-        title: "Transfer Completed",
-        description: `${scannedMachine.id} relocated to ${newLocation}.`,
+    const machineRef = doc(firestore, "machines", scannedMachine.id)
+    const transferRef = collection(firestore, "transfers")
+    const oldLocation = scannedMachine.location
+
+    // Log the transfer
+    const transferData = {
+      machineId: scannedMachine.id,
+      machineName: scannedMachine.name,
+      fromLocation: oldLocation,
+      toLocation: newLocation,
+      transferDate: new Date().toISOString(),
+      requestedBy: "Admin System",
+      status: "Completed"
+    }
+
+    addDoc(transferRef, transferData)
+      .catch(async (e) => {
+        const err = new FirestorePermissionError({ path: 'transfers', operation: 'create', requestResourceData: transferData })
+        errorEmitter.emit('permission-error', err)
       })
-      router.push('/dashboard')
-    }, 1200)
+
+    // Update machine location
+    updateDoc(machineRef, { location: newLocation })
+      .then(() => {
+        setIsProcessing(false)
+        toast({ title: "Transfer Completed", description: `${scannedMachine.id} relocated to ${newLocation}.` })
+        router.push('/dashboard')
+      })
+      .catch(async (error) => {
+        setIsProcessing(false)
+        const permissionError = new FirestorePermissionError({
+          path: machineRef.path,
+          operation: 'update',
+          requestResourceData: { location: newLocation },
+        })
+        errorEmitter.emit('permission-error', permissionError)
+      })
   }
 
-  const filteredMachines = MACHINES.filter(m => 
+  const filteredMachines = machines?.filter(m => 
     m.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
     m.type.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  ) || []
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -135,31 +162,35 @@ export default function ScanTransferPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <ScrollArea className="h-[350px] pr-4">
-                  <div className="space-y-2">
-                    {filteredMachines.map((m) => (
-                      <div 
-                        key={m.id}
-                        className="flex items-center justify-between p-3 rounded-xl border bg-white hover:border-blue-500 hover:bg-blue-50/50 cursor-pointer transition-all group"
-                        onClick={() => handleDetect(m.id)}
-                      >
-                        <div>
-                          <p className="font-bold text-sm group-hover:text-blue-600">{m.type}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground font-bold uppercase">{m.id}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] uppercase font-bold text-slate-400">Location</p>
-                          <p className="text-xs font-semibold">{m.location}</p>
-                        </div>
-                      </div>
-                    ))}
-                    {filteredMachines.length === 0 && (
-                      <div className="py-12 text-center text-muted-foreground">
-                        No machines found matching your search.
-                      </div>
-                    )}
+                {loading ? (
+                  <div className="flex h-64 items-center justify-center">
+                    <Loader2 className="size-8 animate-spin text-primary" />
                   </div>
-                </ScrollArea>
+                ) : (
+                  <ScrollArea className="h-[350px] pr-4">
+                    <div className="space-y-2">
+                      {filteredMachines.map((m) => (
+                        <div 
+                          key={m.id}
+                          className="flex items-center justify-between p-3 rounded-xl border bg-white hover:border-blue-500 hover:bg-blue-50/50 cursor-pointer transition-all group"
+                          onClick={() => handleDetect(m.id)}
+                        >
+                          <div>
+                            <p className="font-bold text-sm group-hover:text-blue-600">{m.type}</p>
+                            <p className="font-mono text-[10px] text-muted-foreground font-bold uppercase">{m.id}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] uppercase font-bold text-slate-400">Location</p>
+                            <p className="text-xs font-semibold">{m.location}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {filteredMachines.length === 0 && (
+                        <div className="py-12 text-center text-muted-foreground">No machines found.</div>
+                      )}
+                    </div>
+                  </ScrollArea>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -194,9 +225,7 @@ export default function ScanTransferPage() {
                       onChange={(e) => setManualId(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleDetect(manualId)}
                     />
-                    <Button onClick={() => handleDetect(manualId)} className="h-11">
-                      Detect
-                    </Button>
+                    <Button onClick={() => handleDetect(manualId)} className="h-11">Detect</Button>
                   </div>
                 </div>
               </CardContent>
@@ -233,10 +262,9 @@ export default function ScanTransferPage() {
                     <SelectValue placeholder="Select target line or bank" />
                   </SelectTrigger>
                   <SelectContent>
-                    {LOCATIONS.filter(l => l !== scannedMachine.location).map(loc => (
-                      <SelectItem key={loc} value={loc} className="py-3 font-medium">
-                        {loc}
-                      </SelectItem>
+                    <SelectItem value="Machine Bank">Machine Bank</SelectItem>
+                    {lines?.filter(l => l.name !== scannedMachine.location).map(loc => (
+                      <SelectItem key={loc.name} value={loc.name} className="py-3 font-medium">{loc.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

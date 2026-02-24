@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Image from "next/image"
 import { 
@@ -23,26 +23,49 @@ import {
   QrCode,
   CalendarDays,
   Camera,
-  Settings2
+  Settings2,
+  Loader2
 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MACHINES, TRANSFERS, MAINTENANCE_TASKS } from "@/lib/mock-data"
-import { MachineStatus } from "@/lib/types"
+import { useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase"
+import { doc, updateDoc, collection, query, where } from "firebase/firestore"
+import { Machine, MachineStatus, Transfer } from "@/lib/types"
 import { AIInspectionCard } from "@/components/ai-inspection-card"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 export default function MachineDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
+  const firestore = useFirestore()
   
-  // Local state for machine status to simulate update
-  const initialMachine = MACHINES.find(m => m.id === params.id)
-  const [currentStatus, setCurrentStatus] = useState<MachineStatus>(initialMachine?.status || 'Idle')
+  const machineRef = useMemoFirebase(() => {
+    if (!firestore || !params.id) return null
+    return doc(firestore, "machines", params.id as string)
+  }, [firestore, params.id])
 
-  if (!initialMachine) {
+  const { data: machine, loading } = useDoc<Machine>(machineRef)
+
+  const transfersQuery = useMemoFirebase(() => {
+    if (!firestore || !params.id) return null
+    return query(collection(firestore, "transfers"), where("machineId", "==", params.id))
+  }, [firestore, params.id])
+
+  const { data: transfers } = useCollection<Transfer>(transfersQuery)
+
+  if (loading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!machine) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
         <h2 className="text-2xl font-bold">Machine Not Found</h2>
@@ -50,9 +73,6 @@ export default function MachineDetailPage() {
       </div>
     )
   }
-
-  const machineTransfers = TRANSFERS.filter(t => t.machineId === initialMachine.id)
-  const machineMaintenance = MAINTENANCE_TASKS.filter(m => m.machineId === initialMachine.id)
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -66,18 +86,20 @@ export default function MachineDetailPage() {
   }
 
   const handleStatusChange = (value: MachineStatus) => {
-    setCurrentStatus(value)
-    toast({
-      title: "Status Updated",
-      description: `Asset ${initialMachine.id} status changed to ${value}.`,
-    })
-  }
+    if (!firestore || !machineRef) return
 
-  const handleChangeImage = () => {
-    toast({
-      title: "Image Upload",
-      description: "Open camera/gallery to replace asset image.",
-    })
+    updateDoc(machineRef, { status: value })
+      .then(() => {
+        toast({ title: "Status Updated", description: `Asset ${machine.id} status changed to ${value}.` })
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: machineRef.path,
+          operation: 'update',
+          requestResourceData: { status: value },
+        })
+        errorEmitter.emit('permission-error', permissionError)
+      })
   }
 
   return (
@@ -87,11 +109,11 @@ export default function MachineDetailPage() {
           <ArrowLeft className="size-4" />
         </Button>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">{initialMachine.type}</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{machine.type}</h2>
           <div className="flex items-center gap-2 mt-1">
-            <Badge variant="outline" className="font-mono">{initialMachine.id}</Badge>
-            <Badge variant="secondary">{initialMachine.serialNumber}</Badge>
-            <Badge className={cn("text-white font-bold", getStatusColor(currentStatus))}>{currentStatus}</Badge>
+            <Badge variant="outline" className="font-mono">{machine.id}</Badge>
+            <Badge variant="secondary">{machine.serialNumber}</Badge>
+            <Badge className={cn("text-white font-bold", getStatusColor(machine.status))}>{machine.status}</Badge>
           </div>
         </div>
       </div>
@@ -101,14 +123,14 @@ export default function MachineDetailPage() {
           <Card className="overflow-hidden border-none shadow-lg">
             <div className="relative h-64 md:h-80 w-full group">
               <Image 
-                src={initialMachine.imageUrl} 
-                alt={initialMachine.type}
+                src={machine.imageUrl || `https://picsum.photos/seed/${machine.id}/600/400`} 
+                alt={machine.type}
                 fill
                 className="object-cover"
                 data-ai-hint="industrial machine"
               />
               <div className="absolute bottom-4 right-4">
-                <Button variant="secondary" size="sm" onClick={handleChangeImage} className="shadow-lg backdrop-blur-sm bg-white/90 font-bold">
+                <Button variant="secondary" size="sm" className="shadow-lg backdrop-blur-sm bg-white/90 font-bold">
                   <Camera className="mr-2 size-4" />
                   Update Photo
                 </Button>
@@ -120,13 +142,13 @@ export default function MachineDetailPage() {
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
                     <Info className="size-3" /> Asset Type
                   </span>
-                  <p className="font-bold">{initialMachine.type}</p>
+                  <p className="font-bold">{machine.type}</p>
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
                     <MapPin className="size-3" /> Active Location
                   </span>
-                  <p className="font-black text-blue-600">{initialMachine.location}</p>
+                  <p className="font-black text-blue-600">{machine.location}</p>
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
@@ -152,9 +174,9 @@ export default function MachineDetailPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {machineTransfers.length > 0 ? (
+                  {transfers && transfers.length > 0 ? (
                     <div className="space-y-4">
-                      {machineTransfers.map((t) => (
+                      {transfers.map((t) => (
                         <div key={t.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                           <div className="flex flex-col">
                             <span className="font-bold text-sm">{t.fromLocation} &rarr; {t.toLocation}</span>
@@ -181,24 +203,12 @@ export default function MachineDetailPage() {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center text-sm border-b pb-3">
                       <span className="text-muted-foreground font-medium">Last Maintenance:</span>
-                      <span className="font-bold">{initialMachine.lastMaintenanceDate}</span>
+                      <span className="font-bold">{machine.lastMaintenanceDate}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm border-b pb-3">
                       <span className="text-muted-foreground font-medium">Last Inspection:</span>
-                      <span className="font-bold">{initialMachine.lastInspectionDate}</span>
+                      <span className="font-bold">{machine.lastInspectionDate}</span>
                     </div>
-                    {machineMaintenance.map(task => (
-                      <div key={task.id} className="bg-slate-50 p-4 rounded-xl border border-slate-100 mt-4">
-                         <div className="flex justify-between items-start mb-2">
-                           <span className="text-sm font-black">{task.description}</span>
-                           <Badge variant="outline" className="bg-white">{task.status}</Badge>
-                         </div>
-                         <div className="flex justify-between text-xs text-muted-foreground font-medium">
-                            <span>Tech: {task.assignedTechnician}</span>
-                            <span>{task.scheduledDate}</span>
-                         </div>
-                      </div>
-                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -207,7 +217,6 @@ export default function MachineDetailPage() {
         </div>
 
         <div className="space-y-6">
-          {/* Status Change & Quick Controls - Very Prominent */}
           <Card className="border-none shadow-xl ring-2 ring-blue-100">
             <CardHeader className="pb-3 bg-blue-50/30">
               <div className="flex items-center gap-2">
@@ -219,7 +228,7 @@ export default function MachineDetailPage() {
             <CardContent className="space-y-5 pt-4">
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase text-blue-600 tracking-widest">Current Unit Status</label>
-                <Select value={currentStatus} onValueChange={handleStatusChange}>
+                <Select value={machine.status} onValueChange={(v) => handleStatusChange(v as MachineStatus)}>
                   <SelectTrigger className="w-full h-12 font-black text-lg border-2 border-blue-100 hover:border-blue-200 focus:ring-blue-100">
                     <SelectValue placeholder="Select current status" />
                   </SelectTrigger>
@@ -244,7 +253,7 @@ export default function MachineDetailPage() {
             </CardContent>
           </Card>
 
-          <AIInspectionCard machine={{...initialMachine, status: currentStatus}} />
+          <AIInspectionCard machine={machine} />
         </div>
       </div>
     </div>

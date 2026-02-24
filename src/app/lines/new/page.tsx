@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -8,25 +9,43 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Save, Loader2, Factory } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useFirestore } from "@/firebase"
+import { doc, setDoc } from "firebase/firestore"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
 
 export default function AddLinePage() {
   const router = useRouter()
   const { toast } = useToast()
+  const firestore = useFirestore()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [lineName, setLineName] = useState("")
+  const [supervisor, setSupervisor] = useState("")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!lineName.trim() || !firestore) return
+
     setIsSubmitting(true)
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false)
-      toast({
-        title: "Success",
-        description: "New production line has been defined.",
+    const lineId = lineName.trim()
+    const lineRef = doc(firestore, "lines", lineId)
+    const lineData = { name: lineId, supervisor: supervisor }
+
+    setDoc(lineRef, lineData)
+      .then(() => {
+        setIsSubmitting(false)
+        toast({ title: "Success", description: "New production line has been defined." })
+        router.push('/lines')
       })
-      router.push('/lines')
-    }, 1200)
+      .catch(async (error) => {
+        setIsSubmitting(false)
+        const permissionError = new FirestorePermissionError({
+          path: lineRef.path,
+          operation: 'create',
+          requestResourceData: lineData,
+        })
+        errorEmitter.emit('permission-error', permissionError)
+      })
   }
 
   return (
@@ -55,12 +74,23 @@ export default function AddLinePage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="line-name">Line Name</Label>
-              <Input id="line-name" placeholder="e.g. Line 6 or Zone C" required />
+              <Input 
+                id="line-name" 
+                placeholder="e.g. Line 6 or Zone C" 
+                value={lineName}
+                onChange={(e) => setLineName(e.target.value)}
+                required 
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="supervisor">Supervisor Assigned (Optional)</Label>
-              <Input id="supervisor" placeholder="e.g. John Doe" />
+              <Input 
+                id="supervisor" 
+                placeholder="e.g. John Doe" 
+                value={supervisor}
+                onChange={(e) => setSupervisor(e.target.value)}
+              />
             </div>
           </CardContent>
           <CardFooter className="flex gap-3 justify-end border-t p-6">

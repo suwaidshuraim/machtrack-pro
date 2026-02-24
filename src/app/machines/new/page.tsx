@@ -11,28 +11,43 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Save, Loader2, Sparkles } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { MACHINE_TYPES } from "@/lib/mock-data"
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { doc, setDoc, collection } from "firebase/firestore"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
+import { MachineType, MachineStatus } from "@/lib/types"
 
 export default function AddMachinePage() {
   const router = useRouter()
   const { toast } = useToast()
+  const firestore = useFirestore()
   const [isSubmitting, setIsSubmitting] = useState(false)
   
   const [selectedType, setSelectedType] = useState<string>("")
   const [assetId, setAssetId] = useState("Select Type...")
   const [serial, setSerial] = useState("")
+  const [location, setLocation] = useState("Machine Bank")
+  const [status, setStatus] = useState<MachineStatus>("Running")
+  const [notes, setNotes] = useState("")
 
-  // Update ID and Serial when type changes
+  const typesQuery = useMemoFirebase(() => {
+    if (!firestore) return null
+    return collection(firestore, "machineTypes")
+  }, [firestore])
+  const { data: machineTypes } = useCollection<MachineType>(typesQuery)
+
+  const linesQuery = useMemoFirebase(() => {
+    if (!firestore) return null
+    return collection(firestore, "lines")
+  }, [firestore])
+  const { data: lines } = useCollection<{ name: string }>(linesQuery)
+
   useEffect(() => {
     if (selectedType) {
-      // Prefix logic: First letters of each word
       const prefix = selectedType.split(' ').map(word => word[0].toUpperCase()).join('')
-      // Simulation: generate a "next" ID
       const nextNum = 100 + Math.floor(Math.random() * 900)
       const generatedId = `${prefix}-${nextNum}`
-      
       const generatedSerial = `SN-${prefix}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
-      
       setAssetId(generatedId)
       setSerial(generatedSerial)
     } else {
@@ -43,22 +58,38 @@ export default function AddMachinePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedType) {
-      toast({ variant: "destructive", title: "Missing Type", description: "Please select a machine type." })
-      return
-    }
-    
+    if (!selectedType || !firestore) return
+
     setIsSubmitting(true)
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false)
-      toast({
-        title: "Success",
-        description: `Asset ${assetId} has been registered successfully.`,
+    const machineRef = doc(firestore, "machines", assetId)
+    const machineData = {
+      id: assetId,
+      name: `${selectedType} ${assetId}`,
+      serialNumber: serial,
+      type: selectedType,
+      location: location,
+      status: status,
+      usageHistory: notes,
+      lastMaintenanceDate: new Date().toISOString().split('T')[0],
+      lastInspectionDate: new Date().toISOString().split('T')[0],
+      imageUrl: `https://picsum.photos/seed/${assetId}/400/300`
+    }
+
+    setDoc(machineRef, machineData)
+      .then(() => {
+        setIsSubmitting(false)
+        toast({ title: "Success", description: `Asset ${assetId} registered successfully.` })
+        router.push('/machines')
       })
-      router.push('/machines')
-    }, 1500)
+      .catch(async (error) => {
+        setIsSubmitting(false)
+        const permissionError = new FirestorePermissionError({
+          path: machineRef.path,
+          operation: 'create',
+          requestResourceData: machineData,
+        })
+        errorEmitter.emit('permission-error', permissionError)
+      })
   }
 
   return (
@@ -87,8 +118,8 @@ export default function AddMachinePage() {
                   <SelectValue placeholder="Pick a machine category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {MACHINE_TYPES.map(type => (
-                    <SelectItem key={type} value={type} className="font-medium">{type}</SelectItem>
+                  {machineTypes?.map(type => (
+                    <SelectItem key={type.name} value={type.name} className="font-medium">{type.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -98,12 +129,7 @@ export default function AddMachinePage() {
               <div className="space-y-2">
                 <Label htmlFor="asset-id" className="text-muted-foreground">Asset ID (Auto-Format)</Label>
                 <div className="relative">
-                  <Input 
-                    id="asset-id" 
-                    value={assetId} 
-                    readOnly 
-                    className="bg-slate-50 font-mono text-blue-600 font-bold border-dashed" 
-                  />
+                  <Input id="asset-id" value={assetId} readOnly className="bg-slate-50 font-mono text-blue-600 font-bold border-dashed" />
                   {selectedType && <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 size-3 text-blue-400" />}
                 </div>
               </div>
@@ -118,24 +144,22 @@ export default function AddMachinePage() {
 
             <div className="space-y-2">
               <Label htmlFor="location">Initial Location</Label>
-              <Select required>
+              <Select onValueChange={setLocation} value={location} required>
                 <SelectTrigger id="location" className="h-11">
                   <SelectValue placeholder="Select location" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Line 1">Line 1</SelectItem>
-                  <SelectItem value="Line 2">Line 2</SelectItem>
-                  <SelectItem value="Line 3">Line 3</SelectItem>
-                  <SelectItem value="Line 4">Line 4</SelectItem>
-                  <SelectItem value="Line 5">Line 5</SelectItem>
                   <SelectItem value="Machine Bank">Machine Bank</SelectItem>
+                  {lines?.map(l => (
+                    <SelectItem key={l.name} value={l.name}>{l.name}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="status">Initial Status</Label>
-              <Select defaultValue="Running">
+              <Select onValueChange={(v) => setStatus(v as MachineStatus)} defaultValue="Running">
                 <SelectTrigger id="status" className="h-11">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
@@ -151,7 +175,7 @@ export default function AddMachinePage() {
 
             <div className="space-y-2">
               <Label htmlFor="history">Usage/History Notes</Label>
-              <Textarea id="history" placeholder="Describe the machine's intended use or background..." className="min-h-[100px]" />
+              <Textarea id="history" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Describe the machine's intended use or background..." className="min-h-[100px]" />
             </div>
           </CardContent>
           <CardFooter className="flex gap-3 justify-end border-t p-6">

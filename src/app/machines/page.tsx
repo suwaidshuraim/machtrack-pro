@@ -28,19 +28,19 @@ import {
   Box, 
   ArrowLeft,
   X,
-  Settings2,
-  Settings
+  Settings,
+  Loader2
 } from "lucide-react"
 import { 
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MACHINES, MACHINE_TYPES } from "@/lib/mock-data"
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { collection } from "firebase/firestore"
+import { Machine, MachineType } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 export default function MachineMasterPage() {
@@ -49,11 +49,26 @@ export default function MachineMasterPage() {
   const [typeFilter, setTypeFilter] = useState("All")
   const [locationFilter, setLocationFilter] = useState("All")
   const router = useRouter()
+  const firestore = useFirestore()
 
-  // Get unique locations for the filter
-  const availableLocations = Array.from(new Set(MACHINES.map(m => m.location)))
+  const machinesQuery = useMemoFirebase(() => {
+    if (!firestore) return null
+    return collection(firestore, "machines")
+  }, [firestore])
 
-  const filteredMachines = MACHINES.filter(m => {
+  const { data: machines, loading } = useCollection<Machine>(machinesQuery)
+
+  const typesQuery = useMemoFirebase(() => {
+    if (!firestore) return null
+    return collection(firestore, "machineTypes")
+  }, [firestore])
+
+  const { data: machineTypes } = useCollection<MachineType>(typesQuery)
+
+  const safeMachines = machines || []
+  const availableLocations = Array.from(new Set(safeMachines.map(m => m.location)))
+
+  const filteredMachines = safeMachines.filter(m => {
     const s = search.toLowerCase()
     const matchesSearch = 
       m.id.toLowerCase().includes(s) || 
@@ -153,105 +168,107 @@ export default function MachineMasterPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-slate-50/50">
-              <TableRow>
-                <TableHead className="font-bold py-4">
-                  <div className="flex items-center gap-2">
-                    ID / Serial
-                  </div>
-                </TableHead>
-                <TableHead className="font-bold">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                      Machine Type <Filter className="size-3" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuRadioGroup value={typeFilter} onValueChange={setTypeFilter}>
-                        <DropdownMenuRadioItem value="All">All Types</DropdownMenuRadioItem>
-                        {MACHINE_TYPES.map(type => (
-                          <DropdownMenuRadioItem key={type} value={type}>{type}</DropdownMenuRadioItem>
-                        ))}
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableHead>
-                <TableHead className="font-bold">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                      Location <Filter className="size-3" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuRadioGroup value={locationFilter} onValueChange={setLocationFilter}>
-                        <DropdownMenuRadioItem value="All">All Locations</DropdownMenuRadioItem>
-                        {availableLocations.map(loc => (
-                          <DropdownMenuRadioItem key={loc} value={loc}>{loc}</DropdownMenuRadioItem>
-                        ))}
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableHead>
-                <TableHead className="font-bold">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                      Status <Filter className="size-3" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
-                        <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Running">Running</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Idle">Idle</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Bank">Bank</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Breakdown">Breakdown</DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="Repair">Repair</DropdownMenuRadioItem>
-                      </DropdownMenuRadioGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableHead>
-                <TableHead className="text-right pr-6 font-bold">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredMachines.map((machine) => (
-                <TableRow key={machine.id} className="hover:bg-slate-50/80 transition-colors">
-                  <TableCell className="py-4">
-                    <div className="flex flex-col">
-                      <span className="font-mono text-xs font-bold text-blue-600">{machine.id}</span>
-                      <span className="text-[10px] text-muted-foreground">{machine.serialNumber}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-bold text-sm text-slate-800">{machine.type}</span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200 font-bold">
-                      {machine.location}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className={cn("size-2 rounded-full", getStatusColor(machine.status))} />
-                      <span className="text-sm font-medium">{machine.status}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right pr-6">
-                    <Button variant="ghost" size="icon" className="hover:bg-blue-50 text-blue-600" asChild>
-                      <Link href={`/machines/${machine.id}`}>
-                        <ChevronRight className="h-5 w-5" />
-                      </Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredMachines.length === 0 && (
+          {loading ? (
+            <div className="flex h-64 items-center justify-center">
+              <Loader2 className="size-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader className="bg-slate-50/50">
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                    No machines found matching your search or filter criteria.
-                  </TableCell>
+                  <TableHead className="font-bold py-4">ID / Serial</TableHead>
+                  <TableHead className="font-bold">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                        Machine Type <Filter className="size-3" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuRadioGroup value={typeFilter} onValueChange={setTypeFilter}>
+                          <DropdownMenuRadioItem value="All">All Types</DropdownMenuRadioItem>
+                          {machineTypes?.map(t => (
+                            <DropdownMenuRadioItem key={t.name} value={t.name}>{t.name}</DropdownMenuRadioItem>
+                          ))}
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableHead>
+                  <TableHead className="font-bold">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                        Location <Filter className="size-3" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuRadioGroup value={locationFilter} onValueChange={setLocationFilter}>
+                          <DropdownMenuRadioItem value="All">All Locations</DropdownMenuRadioItem>
+                          {availableLocations.map(loc => (
+                            <DropdownMenuRadioItem key={loc} value={loc}>{loc}</DropdownMenuRadioItem>
+                          ))}
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableHead>
+                  <TableHead className="font-bold">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                        Status <Filter className="size-3" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                          <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="Running">Running</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="Idle">Idle</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="Bank">Bank</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="Breakdown">Breakdown</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="Repair">Repair</DropdownMenuRadioItem>
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableHead>
+                  <TableHead className="text-right pr-6 font-bold">Action</TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredMachines.map((machine) => (
+                  <TableRow key={machine.id} className="hover:bg-slate-50/80 transition-colors">
+                    <TableCell className="py-4">
+                      <div className="flex flex-col">
+                        <span className="font-mono text-xs font-bold text-blue-600">{machine.id}</span>
+                        <span className="text-[10px] text-muted-foreground">{machine.serialNumber}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-bold text-sm text-slate-800">{machine.type}</span>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200 font-bold">
+                        {machine.location}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className={cn("size-2 rounded-full", getStatusColor(machine.status))} />
+                        <span className="text-sm font-medium">{machine.status}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right pr-6">
+                      <Button variant="ghost" size="icon" className="hover:bg-blue-50 text-blue-600" asChild>
+                        <Link href={`/machines/${machine.id}`}>
+                          <ChevronRight className="h-5 w-5" />
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredMachines.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                      No machines found matching your search or filter criteria.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

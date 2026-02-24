@@ -1,0 +1,78 @@
+
+{
+  "entities": {
+    "Machine": {
+      "title": "Machine",
+      "description": "An industrial machine asset.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "serialNumber": { "type": "string" },
+        "type": { "type": "string" },
+        "location": { "type": "string" },
+        "status": { "type": "string", "enum": ["Running", "Idle", "Bank", "Breakdown", "Repair"] },
+        "lastMaintenanceDate": { "type": "string", "format": "date" },
+        "lastInspectionDate": { "type": "string", "format": "date" },
+        "usageHistory": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["id", "serialNumber", "type", "location", "status"]
+    },
+    "Line": {
+      "title": "Production Line",
+      "description": "A production area or assembly line.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "supervisor": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+    "Transfer": {
+      "title": "Machine Transfer",
+      "description": "A record of a machine being moved between locations.",
+      "type": "object",
+      "properties": {
+        "machineId": { "type": "string" },
+        "machineName": { "type": "string" },
+        "fromLocation": { "type": "string" },
+        "toLocation": { "type": "string" },
+        "transferDate": { "type": "string", "format": "date-time" },
+        "requestedBy": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Completed", "Cancelled"] }
+      },
+      "required": ["machineId", "fromLocation", "toLocation", "transferDate"]
+    },
+    "MachineType": {
+      "title": "Machine Type",
+      "description": "A category of industrial equipment.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" }
+      },
+      "required": ["name"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/machines/{machineId}": {
+      "schema": "Machine",
+      "description": "Collection of industrial machines."
+    },
+    "/lines/{lineId}": {
+      "schema": "Line",
+      "description": "Collection of production lines."
+    },
+    "/transfers/{transferId}": {
+      "schema": "Transfer",
+      "description": "History of machine movements."
+    },
+    "/machineTypes/{typeId}": {
+      "schema": "MachineType",
+      "description": "Registry of valid machine categories."
+    }
+  }
+}

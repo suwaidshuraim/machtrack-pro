@@ -23,41 +23,60 @@ import {
   Loader2
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { MACHINE_TYPES } from "@/lib/mock-data"
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { collection, doc, setDoc, deleteDoc } from "firebase/firestore"
+import { errorEmitter } from "@/firebase/error-emitter"
+import { FirestorePermissionError } from "@/firebase/errors"
+import { MachineType } from "@/lib/types"
 
 export default function ManageMachineTypesPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const [types, setTypes] = useState<string[]>(MACHINE_TYPES)
+  const firestore = useFirestore()
   const [newType, setNewType] = useState("")
   const [isSaving, setIsSaving] = useState(false)
 
+  const typesQuery = useMemoFirebase(() => {
+    if (!firestore) return null
+    return collection(firestore, "machineTypes")
+  }, [firestore])
+  const { data: machineTypes, loading } = useCollection<MachineType>(typesQuery)
+
   const handleAddType = () => {
-    if (!newType.trim()) return
-    if (types.includes(newType.trim())) {
-      toast({ variant: "destructive", title: "Duplicate Type", description: "This machine type already exists." })
-      return
-    }
-    setTypes([...types, newType.trim()])
-    setNewType("")
-  }
-
-  const handleRemoveType = (typeToRemove: string) => {
-    setTypes(types.filter(t => t !== typeToRemove))
-  }
-
-  const handleSave = () => {
-    setIsSaving(true)
-    // In a real app, this would update Firestore. For now we simulate and update local reference.
-    setTimeout(() => {
-      // Logic would go here to persist
-      setIsSaving(false)
-      toast({
-        title: "Types Updated",
-        description: "Machine categories have been successfully updated.",
+    if (!newType.trim() || !firestore) return
+    const typeId = newType.trim()
+    const typeRef = doc(firestore, "machineTypes", typeId)
+    
+    setDoc(typeRef, { name: typeId })
+      .then(() => {
+        setNewType("")
+        toast({ title: "Type Added", description: `"${typeId}" added to registry.` })
       })
-      router.push('/machines')
-    }, 1000)
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: typeRef.path,
+          operation: 'create',
+          requestResourceData: { name: typeId },
+        })
+        errorEmitter.emit('permission-error', permissionError)
+      })
+  }
+
+  const handleRemoveType = (typeId: string) => {
+    if (!firestore) return
+    const typeRef = doc(firestore, "machineTypes", typeId)
+    
+    deleteDoc(typeRef)
+      .then(() => {
+        toast({ title: "Type Removed", description: "Category deleted successfully." })
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: typeRef.path,
+          operation: 'delete',
+        })
+        errorEmitter.emit('permission-error', permissionError)
+      })
   }
 
   return (
@@ -99,34 +118,32 @@ export default function ManageMachineTypesPage() {
           </div>
 
           <div className="space-y-3">
-            <Label>Active Categories ({types.length})</Label>
-            <div className="grid grid-cols-1 gap-2">
-              {types.map((type) => (
-                <div key={type} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border group hover:border-blue-200 hover:bg-white transition-all">
-                  <span className="font-bold text-slate-700">{type}</span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                    onClick={() => handleRemoveType(type)}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
+            <Label>Active Categories ({machineTypes?.length || 0})</Label>
+            {loading ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="size-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-2">
+                {machineTypes?.map((type) => (
+                  <div key={type.name} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border group hover:border-blue-200 hover:bg-white transition-all">
+                    <span className="font-bold text-slate-700">{type.name}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      onClick={() => handleRemoveType(type.name)}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </CardContent>
         <CardFooter className="flex gap-3 justify-end border-t p-6">
-          <Button variant="outline" onClick={() => router.back()}>Discard Changes</Button>
-          <Button 
-            className="bg-blue-600 hover:bg-blue-700 font-bold min-w-[120px]" 
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Save Changes
-          </Button>
+          <Button variant="outline" onClick={() => router.back()}>Back to Registry</Button>
         </CardFooter>
       </Card>
     </div>

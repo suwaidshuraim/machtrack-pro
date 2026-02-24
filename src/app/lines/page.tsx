@@ -2,27 +2,50 @@
 "use client"
 
 import { useState } from "react"
-import { MACHINES } from "@/lib/mock-data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Factory, Plus, LayoutGrid, ArrowLeft, Search, X } from "lucide-react"
+import { Factory, Plus, LayoutGrid, ArrowLeft, Search, X, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-
-const PREDEFINED_LINES = ["Line 1", "Line 2", "Line 3", "Line 4", "Line 5"]
+import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
+import { collection } from "firebase/firestore"
+import { Machine, Line } from "@/lib/types"
 
 export default function LineMasterPage() {
   const router = useRouter()
   const [search, setSearch] = useState("")
+  const firestore = useFirestore()
 
-  const filteredLines = PREDEFINED_LINES.filter(lineName => {
+  const linesQuery = useMemoFirebase(() => {
+    if (!firestore) return null
+    return collection(firestore, "lines")
+  }, [firestore])
+  const { data: lines, loading: linesLoading } = useCollection<Line>(linesQuery)
+
+  const machinesQuery = useMemoFirebase(() => {
+    if (!firestore) return null
+    return collection(firestore, "machines")
+  }, [firestore])
+  const { data: machines, loading: machinesLoading } = useCollection<Machine>(machinesQuery)
+
+  if (linesLoading || machinesLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  const safeLines = lines || []
+  const safeMachines = machines || []
+
+  const filteredLines = safeLines.filter(line => {
     const s = search.toLowerCase()
-    const lineMachines = MACHINES.filter(m => m.location === lineName)
+    const lineMachines = safeMachines.filter(m => m.location === line.name)
     
-    // Search in Line Name or any machine ID/Type/Serial in that line
-    const matchesLineName = lineName.toLowerCase().includes(s)
+    const matchesLineName = line.name.toLowerCase().includes(s)
     const matchesMachineInLine = lineMachines.some(m => 
       m.id.toLowerCase().includes(s) || 
       m.type.toLowerCase().includes(s) || 
@@ -72,8 +95,8 @@ export default function LineMasterPage() {
       </div>
 
       <div className="grid gap-6">
-        {filteredLines.map((lineName) => {
-          const lineMachines = MACHINES.filter(m => m.location === lineName)
+        {filteredLines.map((line) => {
+          const lineMachines = safeMachines.filter(m => m.location === line.name)
           
           const typeCounts = lineMachines.reduce((acc, m) => {
             acc[m.type] = (acc[m.type] || 0) + 1
@@ -84,14 +107,14 @@ export default function LineMasterPage() {
           const serviceRequiredCount = lineMachines.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
 
           return (
-            <Card key={lineName} className="overflow-hidden border-none shadow-md bg-white hover:shadow-lg transition-shadow">
+            <Card key={line.name} className="overflow-hidden border-none shadow-md bg-white hover:shadow-lg transition-shadow">
               <CardHeader className="bg-slate-50/80 border-b py-5 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-md">
                     <Factory className="size-6" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl font-black text-slate-800">{lineName}</CardTitle>
+                    <CardTitle className="text-xl font-black text-slate-800">{line.name}</CardTitle>
                     <div className="flex items-center gap-3 mt-1">
                       <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
                         {lineMachines.length} Machines Total
@@ -129,12 +152,12 @@ export default function LineMasterPage() {
                    <Button variant="ghost" size="sm" className="text-blue-600 font-bold hover:bg-blue-50" asChild>
                       <Link href="/machines">
                         <LayoutGrid className="mr-2 size-4" />
-                        View Assets in {lineName}
+                        View Assets in {line.name}
                       </Link>
                    </Button>
                    <Button variant="outline" size="sm" className="rounded-xl font-bold" asChild>
                       <Link href="/transfer/scan">
-                        Relocate to {lineName}
+                        Relocate to {line.name}
                       </Link>
                    </Button>
                 </div>
