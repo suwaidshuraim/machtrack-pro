@@ -29,15 +29,15 @@ const MACHINE_TYPES = [
 
 export default function DashboardPage() {
   const totalCount = MACHINES.length
-  const runningCount = MACHINES.filter(m => m.status === 'Operational').length
-  const bankCount = MACHINES.filter(m => m.location === 'Machine Bank').length
-  const repairCount = MACHINES.filter(m => m.status === 'Down' || m.status === 'In Maintenance').length
+  const runningCount = MACHINES.filter(m => m.status === 'Running').length
+  const bankCount = MACHINES.filter(m => m.status === 'Bank' || m.location === 'Machine Bank').length
+  const breakdownCount = MACHINES.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
 
   const getTypeStats = (typeName: string) => {
     const filtered = MACHINES.filter(m => m.type === typeName)
     return {
       total: filtered.length,
-      running: filtered.filter(m => m.status === 'Operational').length
+      running: filtered.filter(m => m.status === 'Running').length
     }
   }
 
@@ -62,11 +62,15 @@ export default function DashboardPage() {
           </div>
           <div className="h-8 w-px bg-border mx-2" />
           <div className="text-center">
-            <p className="text-xs text-muted-foreground font-medium">Repair</p>
-            <p className="text-2xl font-bold text-red-500">{repairCount}</p>
+            <p className="text-xs text-muted-foreground font-medium">Repair / Breakdown</p>
+            <p className="text-2xl font-bold text-red-500">{breakdownCount}</p>
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-2xl font-bold text-slate-900">Types of Machines</h2>
+      </div>
 
       {/* Machine Type Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -79,7 +83,7 @@ export default function DashboardPage() {
                   <h3 className="font-bold text-lg mb-2">{type.name}</h3>
                   <div className="flex items-center gap-2 mb-1">
                     <div className={cn("size-2.5 rounded-full", type.color)} />
-                    <span className="text-sm font-semibold">{stats.running}</span>
+                    <span className="text-sm font-semibold">{stats.running} Running</span>
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Total <span className="font-bold text-foreground">{stats.total}</span>
@@ -109,7 +113,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="font-bold text-lg">Machine Master</p>
-              <p className="text-blue-100 text-xs">Add / Edit machine</p>
+              <p className="text-blue-100 text-xs">View all assets & history</p>
             </div>
           </div>
         </Link>
@@ -124,7 +128,7 @@ export default function DashboardPage() {
                 <p className="font-bold text-lg">Line Master</p>
                 <span className="bg-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">Important</span>
               </div>
-              <p className="text-slate-300 text-xs">Bgd • To M Line</p>
+              <p className="text-slate-300 text-xs">Real-time line allotment</p>
             </div>
           </div>
         </Link>
@@ -148,7 +152,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="font-bold text-lg">Transfer History</p>
-              <p className="text-amber-100 text-xs">Date • Time log</p>
+              <p className="text-amber-100 text-xs">Historical movement logs</p>
             </div>
           </div>
         </Link>
@@ -159,7 +163,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between p-4 bg-slate-100 rounded-xl border border-slate-200 hover:bg-slate-200 transition-colors">
           <div className="flex items-center gap-3">
             <Wrench className="size-5 text-slate-500" />
-            <span className="font-semibold text-slate-700">Maintenance / Repair</span>
+            <span className="font-semibold text-slate-700">Maintenance / Repair Hub</span>
           </div>
           <ChevronRight className="size-5 text-slate-400" />
         </div>

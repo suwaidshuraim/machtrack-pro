@@ -3,6 +3,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { 
   Card, 
   CardContent, 
@@ -19,11 +20,12 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, ChevronRight, Plus, Filter, Box } from "lucide-react"
+import { Search, ChevronRight, Plus, Filter, Box, ArrowLeft } from "lucide-react"
 import { MACHINES } from "@/lib/mock-data"
 
 export default function MachineHistoryPage() {
   const [search, setSearch] = useState("")
+  const router = useRouter()
 
   const filteredMachines = MACHINES.filter(m => 
     m.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -31,21 +33,39 @@ export default function MachineHistoryPage() {
     m.serialNumber.toLowerCase().includes(search.toLowerCase())
   )
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Running': return 'bg-green-500';
+      case 'Idle': return 'bg-yellow-500';
+      case 'Bank': return 'bg-blue-500';
+      case 'Breakdown': return 'bg-red-500';
+      case 'Repair': return 'bg-orange-500';
+      default: return 'bg-slate-400';
+    }
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Machine History</h2>
-          <p className="text-muted-foreground">Full registry of industrial assets and their current assignments.</p>
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full">
+            <ArrowLeft className="size-4" />
+          </Button>
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900">Machine History</h2>
+            <p className="text-muted-foreground">Full registry of industrial assets and their current assignments.</p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" className="rounded-xl shadow-sm">
             <Filter className="mr-2 size-4" />
             Filter
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md">
-            <Plus className="mr-2 size-4" />
-            Add New Machine
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md" asChild>
+            <Link href="/machines/new">
+              <Plus className="mr-2 size-4" />
+              Add New Machine
+            </Link>
           </Button>
         </div>
       </div>
@@ -103,10 +123,7 @@ export default function MachineHistoryPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <div className={`size-2 rounded-full ${
-                        machine.status === 'Operational' ? 'bg-green-500' :
-                        machine.status === 'In Maintenance' ? 'bg-blue-500' : 'bg-red-500'
-                      }`} />
+                      <div className={cn("size-2 rounded-full", getStatusColor(machine.status))} />
                       <span className="text-sm font-medium">{machine.status}</span>
                     </div>
                   </TableCell>

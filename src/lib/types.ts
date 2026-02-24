@@ -1,5 +1,5 @@
 
-export type MachineStatus = 'Operational' | 'In Maintenance' | 'Down' | 'In Transit';
+export type MachineStatus = 'Running' | 'Idle' | 'Bank' | 'Breakdown' | 'Repair';
 
 export interface Machine {
   id: string;
@@ -12,7 +12,7 @@ export interface Machine {
   lastInspectionDate: string;
   usageHistory: string;
   imageUrl: string;
-  runningCount?: number; // Added for UI display logic
+  runningCount?: number; 
 }
 
 export interface Transfer {

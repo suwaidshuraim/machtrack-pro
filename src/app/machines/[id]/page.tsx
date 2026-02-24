@@ -25,6 +25,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MACHINES, TRANSFERS, MAINTENANCE_TASKS } from "@/lib/mock-data"
 import { AIInspectionCard } from "@/components/ai-inspection-card"
+import { cn } from "@/lib/utils"
 
 export default function MachineDetailPage() {
   const params = useParams()
@@ -35,7 +36,7 @@ export default function MachineDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
         <h2 className="text-2xl font-bold">Machine Not Found</h2>
-        <Button onClick={() => router.back()}>Go Back</Button>
+        <Button onClick={() => router.push('/machines')}>Go to History</Button>
       </div>
     )
   }
@@ -43,10 +44,21 @@ export default function MachineDetailPage() {
   const machineTransfers = TRANSFERS.filter(t => t.machineId === machine.id)
   const machineMaintenance = MAINTENANCE_TASKS.filter(m => m.machineId === machine.id)
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Running': return 'bg-green-500';
+      case 'Idle': return 'bg-yellow-500';
+      case 'Bank': return 'bg-blue-500';
+      case 'Breakdown': return 'bg-red-500';
+      case 'Repair': return 'bg-orange-500';
+      default: return 'bg-slate-400';
+    }
+  }
+
   return (
     <div className="space-y-8 pb-12">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => router.back()}>
+        <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full">
           <ArrowLeft className="size-4" />
         </Button>
         <div>
@@ -54,7 +66,7 @@ export default function MachineDetailPage() {
           <div className="flex items-center gap-2 mt-1">
             <Badge variant="outline">{machine.id}</Badge>
             <Badge variant="secondary">{machine.serialNumber}</Badge>
-            <Badge className="bg-primary">{machine.status}</Badge>
+            <Badge className={cn("text-white", getStatusColor(machine.status))}>{machine.status}</Badge>
           </div>
         </div>
       </div>
@@ -160,33 +172,6 @@ export default function MachineDetailPage() {
                 </CardContent>
               </Card>
             </TabsContent>
-            <TabsContent value="details">
-               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Technical Specifications</CardTitle>
-                </CardHeader>
-                <CardContent>
-                   <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="p-3 border rounded-md">
-                        <span className="block text-xs text-muted-foreground uppercase">Power Rating</span>
-                        <span className="font-medium">45 kW</span>
-                      </div>
-                      <div className="p-3 border rounded-md">
-                        <span className="block text-xs text-muted-foreground uppercase">Weight</span>
-                        <span className="font-medium">2,450 kg</span>
-                      </div>
-                      <div className="p-3 border rounded-md">
-                        <span className="block text-xs text-muted-foreground uppercase">Operating Temp</span>
-                        <span className="font-medium">10&deg;C - 40&deg;C</span>
-                      </div>
-                      <div className="p-3 border rounded-md">
-                        <span className="block text-xs text-muted-foreground uppercase">Control System</span>
-                        <span className="font-medium">OS-Mach-9X</span>
-                      </div>
-                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
           </Tabs>
         </div>
 
@@ -199,7 +184,7 @@ export default function MachineDetailPage() {
               <CardDescription>Manage this asset quickly.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
-              <Button className="w-full bg-primary justify-start" variant="default">
+              <Button className="w-full bg-primary justify-start" variant="default" onClick={() => router.push('/transfer/scan')}>
                 <Repeat className="mr-2 size-4" /> Transfer Machine
               </Button>
               <Button className="w-full justify-start" variant="outline">
@@ -208,17 +193,6 @@ export default function MachineDetailPage() {
               <Button className="w-full justify-start" variant="outline">
                 <QrCode className="mr-2 size-4" /> Print Asset Label
               </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Usage Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-               <div className="text-sm text-muted-foreground italic leading-relaxed">
-                  "{machine.usageHistory}"
-               </div>
             </CardContent>
           </Card>
         </div>

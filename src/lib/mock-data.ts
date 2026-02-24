@@ -1,7 +1,6 @@
 
 import { Machine, Transfer, MaintenanceTask } from './types';
 
-// Expanded mock data to reflect requested counts for a realistic prototype
 export const MACHINES: Machine[] = [
   ...Array(15).fill(null).map((_, i) => ({
     id: `FB-${100 + i}`,
@@ -9,7 +8,7 @@ export const MACHINES: Machine[] = [
     serialNumber: `SN-FB-${1000 + i}`,
     type: 'Flat Bed',
     location: i < 5 ? 'Line 1' : i < 10 ? 'Line 2' : 'Machine Bank',
-    status: 'Operational' as const,
+    status: (i < 8 ? 'Running' : 'Idle') as any,
     lastMaintenanceDate: '2024-10-15',
     lastInspectionDate: '2024-11-20',
     usageHistory: 'Standard production use.',
@@ -21,7 +20,7 @@ export const MACHINES: Machine[] = [
     serialNumber: `SN-CB-${2000 + i}`,
     type: 'Cylinder',
     location: i < 5 ? 'Line 3' : 'Machine Bank',
-    status: i === 0 ? 'Down' as const : 'Operational' as const,
+    status: (i === 0 ? 'Breakdown' : 'Running') as any,
     lastMaintenanceDate: '2024-12-01',
     lastInspectionDate: '2024-11-05',
     usageHistory: 'Heavy material processing.',
@@ -33,24 +32,12 @@ export const MACHINES: Machine[] = [
     serialNumber: `SN-AMS-${3000 + i}`,
     type: 'AMS',
     location: i < 10 ? 'Line 4' : i < 20 ? 'Line 5' : 'Machine Bank',
-    status: i % 10 === 0 ? 'In Maintenance' as const : 'Operational' as const,
+    status: (i % 10 === 0 ? 'Repair' : i % 7 === 0 ? 'Bank' : 'Running') as any,
     lastMaintenanceDate: '2024-08-20',
     lastInspectionDate: '2024-09-10',
     usageHistory: 'Pattern stitching specialist.',
     imageUrl: 'https://picsum.photos/seed/ams/400/300',
   })),
-  {
-    id: 'MAC-999',
-    name: 'Heavy Presser',
-    serialNumber: 'SN-PRS-999',
-    type: 'Others',
-    location: 'Line 1',
-    status: 'Operational',
-    lastMaintenanceDate: '2025-01-10',
-    lastInspectionDate: '2025-01-05',
-    usageHistory: 'Final stage pressing.',
-    imageUrl: 'https://picsum.photos/seed/press/400/300',
-  }
 ];
 
 export const TRANSFERS: Transfer[] = [
