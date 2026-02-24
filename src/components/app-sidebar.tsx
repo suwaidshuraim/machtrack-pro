@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -9,7 +10,8 @@ import {
   Settings,
   HelpCircle,
   Factory,
-  QrCode
+  QrCode,
+  History
 } from "lucide-react"
 
 import {
@@ -26,7 +28,9 @@ import {
 const mainNav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Machine History", url: "/machines", icon: Box },
+  { title: "Line Master", url: "/lines", icon: Factory },
   { title: "Scan & Transfer", url: "/transfer/scan", icon: QrCode },
+  { title: "Transfer History", url: "/transfers", icon: History },
 ]
 
 export function AppSidebar() {

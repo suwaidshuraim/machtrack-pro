@@ -114,8 +114,8 @@ export default function DashboardPage() {
           </div>
         </Link>
 
-        <Link href="/machines">
-          <div className="flex items-center gap-4 p-5 rounded-2xl bg-slate-800 text-white shadow-lg hover:bg-slate-900 transition-colors">
+        <Link href="/lines">
+          <div className="flex items-center gap-4 p-5 rounded-2xl bg-slate-800 text-white shadow-lg hover:bg-slate-900 transition-colors cursor-pointer">
             <div className="p-2 bg-white/20 rounded-xl">
               <Factory className="size-8" />
             </div>
