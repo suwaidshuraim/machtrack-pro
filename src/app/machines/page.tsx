@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Search, ChevronRight, Plus, Filter, Box, ArrowLeft } from "lucide-react"
 import { MACHINES } from "@/lib/mock-data"
+import { cn } from "@/lib/utils"
 
 export default function MachineHistoryPage() {
   const [search, setSearch] = useState("")
