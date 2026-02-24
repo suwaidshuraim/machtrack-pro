@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -62,11 +61,6 @@ export default function AddLinePage() {
             <div className="space-y-2">
               <Label htmlFor="supervisor">Supervisor Assigned (Optional)</Label>
               <Input id="supervisor" placeholder="e.g. John Doe" />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="capacity">Target Capacity (nos/day)</Label>
-              <Input id="capacity" type="number" placeholder="e.g. 500" />
             </div>
           </CardContent>
           <CardFooter className="flex gap-3 justify-end border-t p-6">

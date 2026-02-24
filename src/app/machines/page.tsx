@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -29,8 +28,8 @@ export default function MachineHistoryPage() {
   const router = useRouter()
 
   const filteredMachines = MACHINES.filter(m => 
-    m.name.toLowerCase().includes(search.toLowerCase()) || 
-    m.id.toLowerCase().includes(search.toLowerCase()) ||
+    m.id.toLowerCase().includes(search.toLowerCase()) || 
+    m.type.toLowerCase().includes(search.toLowerCase()) ||
     m.serialNumber.toLowerCase().includes(search.toLowerCase())
   )
 
@@ -77,7 +76,7 @@ export default function MachineHistoryPage() {
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Search by ID, Name or Serial..." 
+                placeholder="Search by ID, Type or Serial..." 
                 className="pl-10 h-11 bg-slate-50 border-none focus-visible:ring-1 focus-visible:ring-blue-200"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -96,7 +95,7 @@ export default function MachineHistoryPage() {
             <TableHeader className="bg-slate-50/50">
               <TableRow>
                 <TableHead className="font-bold py-4">ID / Serial</TableHead>
-                <TableHead className="font-bold">Details</TableHead>
+                <TableHead className="font-bold">Machine Type</TableHead>
                 <TableHead className="font-bold">Current Location</TableHead>
                 <TableHead className="font-bold">Status</TableHead>
                 <TableHead className="text-right pr-6 font-bold">Action</TableHead>
@@ -112,10 +111,7 @@ export default function MachineHistoryPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-sm text-slate-800">{machine.name}</span>
-                      <span className="text-xs text-muted-foreground">{machine.type} Machine</span>
-                    </div>
+                    <span className="font-bold text-sm text-slate-800">{machine.type}</span>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200 font-bold">

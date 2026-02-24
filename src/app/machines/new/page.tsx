@@ -1,7 +1,6 @@
-
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,13 +8,25 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Save, Loader2 } from "lucide-react"
+import { ArrowLeft, Save, Loader2, Sparkles } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 export default function AddMachinePage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // Auto-generated fields
+  const [assetId, setAssetId] = useState("")
+  const [serial, setSerial] = useState("")
+
+  useEffect(() => {
+    // Simulate auto-generation on mount
+    const generatedId = `MAC-${Math.floor(1000 + Math.random() * 9000)}`
+    const generatedSerial = `SN-${Math.random().toString(36).substring(2, 10).toUpperCase()}-${Math.floor(100 + Math.random() * 899)}`
+    setAssetId(generatedId)
+    setSerial(generatedSerial)
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,7 +37,7 @@ export default function AddMachinePage() {
       setIsSubmitting(false)
       toast({
         title: "Success",
-        description: "New machine asset has been registered.",
+        description: `Asset ${assetId} has been registered successfully.`,
       })
       router.push('/machines')
     }, 1500)
@@ -48,23 +59,24 @@ export default function AddMachinePage() {
         <Card className="border-none shadow-lg">
           <CardHeader>
             <CardTitle>Asset Information</CardTitle>
-            <CardDescription>Enter the technical and logistical details for the new machine.</CardDescription>
+            <CardDescription>ID and Serial Number are automatically assigned.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="asset-id">Asset ID</Label>
-                <Input id="asset-id" placeholder="e.g. FB-200" required />
+                <Label htmlFor="asset-id" className="text-muted-foreground">Asset ID (Auto)</Label>
+                <div className="relative">
+                  <Input id="asset-id" value={assetId} readOnly className="bg-slate-50 font-mono text-blue-600 font-bold" />
+                  <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 size-3 text-blue-400" />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="serial">Serial Number</Label>
-                <Input id="serial" placeholder="e.g. SN-9821-XX" required />
+                <Label htmlFor="serial" className="text-muted-foreground">Serial Number (Auto)</Label>
+                <div className="relative">
+                  <Input id="serial" value={serial} readOnly className="bg-slate-50 font-mono" />
+                  <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 size-3 text-slate-400" />
+                </div>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="name">Machine Name</Label>
-              <Input id="name" placeholder="e.g. Industrial Flat Bed Stitcher" required />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
