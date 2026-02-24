@@ -20,16 +20,19 @@ import {
   MapPin, 
   Info,
   QrCode,
-  CalendarDays
+  CalendarDays,
+  Camera
 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MACHINES, TRANSFERS, MAINTENANCE_TASKS } from "@/lib/mock-data"
 import { AIInspectionCard } from "@/components/ai-inspection-card"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 
 export default function MachineDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const { toast } = useToast()
   const machine = MACHINES.find(m => m.id === params.id)
 
   if (!machine) {
@@ -55,6 +58,13 @@ export default function MachineDetailPage() {
     }
   }
 
+  const handleChangeImage = () => {
+    toast({
+      title: "Image Upload",
+      description: "In a production environment, this would open the camera or file gallery to replace the asset image.",
+    })
+  }
+
   return (
     <div className="space-y-8 pb-12">
       <div className="flex items-center gap-4">
@@ -62,7 +72,7 @@ export default function MachineDetailPage() {
           <ArrowLeft className="size-4" />
         </Button>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">{machine.name}</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{machine.type}</h2>
           <div className="flex items-center gap-2 mt-1">
             <Badge variant="outline">{machine.id}</Badge>
             <Badge variant="secondary">{machine.serialNumber}</Badge>
@@ -74,14 +84,20 @@ export default function MachineDetailPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
           <Card className="overflow-hidden">
-            <div className="relative h-64 md:h-80 w-full">
+            <div className="relative h-64 md:h-80 w-full group">
               <Image 
                 src={machine.imageUrl} 
-                alt={machine.name}
+                alt={machine.type}
                 fill
                 className="object-cover"
                 data-ai-hint="industrial machine"
               />
+              <div className="absolute bottom-4 right-4">
+                <Button variant="secondary" size="sm" onClick={handleChangeImage} className="shadow-lg backdrop-blur-sm bg-white/90">
+                  <Camera className="mr-2 size-4" />
+                  Change Image
+                </Button>
+              </div>
             </div>
             <CardContent className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
@@ -95,7 +111,7 @@ export default function MachineDetailPage() {
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                     <MapPin className="size-3" /> Current Location
                   </span>
-                  <p className="font-medium text-accent">{machine.location}</p>
+                  <p className="font-medium text-blue-600 font-bold">{machine.location}</p>
                 </div>
                 <div className="space-y-1">
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
@@ -184,11 +200,11 @@ export default function MachineDetailPage() {
               <CardDescription>Manage this asset quickly.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
-              <Button className="w-full bg-primary justify-start" variant="default" onClick={() => router.push('/transfer/scan')}>
+              <Button className="w-full bg-blue-600 justify-start" variant="default" onClick={() => router.push('/transfer/scan')}>
                 <Repeat className="mr-2 size-4" /> Transfer Machine
               </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <Wrench className="mr-2 size-4" /> Schedule Service
+              <Button className="w-full justify-start" variant="outline" onClick={handleChangeImage}>
+                <Camera className="mr-2 size-4" /> Update Photo
               </Button>
               <Button className="w-full justify-start" variant="outline">
                 <QrCode className="mr-2 size-4" /> Print Asset Label

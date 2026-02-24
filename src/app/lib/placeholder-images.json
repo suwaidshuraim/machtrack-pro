@@ -14,10 +14,22 @@
       "imageHint": "cylinder bed machine"
     },
     {
+      "id": "high-post",
+      "description": "High Post Industrial Sewing Machine",
+      "imageUrl": "https://picsum.photos/seed/highpost/400/300",
+      "imageHint": "high post machine"
+    },
+    {
       "id": "ams",
       "description": "AMS Automated Pattern Machine",
       "imageUrl": "https://picsum.photos/seed/ams/400/300",
       "imageHint": "automated machinery"
+    },
+    {
+      "id": "overlock",
+      "description": "Overlock Industrial Sewing Machine",
+      "imageUrl": "https://picsum.photos/seed/overlock/400/300",
+      "imageHint": "overlock machine"
     },
     {
       "id": "embossing",

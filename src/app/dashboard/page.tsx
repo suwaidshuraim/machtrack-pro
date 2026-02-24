@@ -4,15 +4,13 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { MACHINES } from "@/lib/mock-data"
 import { 
-  Plus, 
   Repeat, 
   History, 
   LayoutGrid, 
   ChevronRight, 
   Wrench, 
   Factory, 
-  Warehouse,
-  AlertCircle
+  Image as ImageIcon
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -29,7 +27,7 @@ const MACHINE_TYPES = [
 
 export default function DashboardPage() {
   const totalCount = MACHINES.length
-  const runningCount = MACHINES.filter(m => m.status === 'Running').length
+  const activeCount = MACHINES.filter(m => m.location.startsWith('Line')).length
   const bankCount = MACHINES.filter(m => m.status === 'Bank' || m.location === 'Machine Bank').length
   const breakdownCount = MACHINES.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
 
@@ -47,22 +45,22 @@ export default function DashboardPage() {
       <Card className="border-none shadow-md bg-white/80 backdrop-blur">
         <CardContent className="p-4 flex items-center justify-around">
           <div className="text-center">
-            <p className="text-xs text-muted-foreground font-medium">Total Machines</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase">Total Machines</p>
             <p className="text-2xl font-bold">{totalCount}</p>
           </div>
           <div className="h-8 w-px bg-border mx-2" />
           <div className="text-center">
-            <p className="text-xs text-muted-foreground font-medium">Running</p>
-            <p className="text-2xl font-bold text-green-600">{runningCount}</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase">Active (Allotted)</p>
+            <p className="text-2xl font-bold text-green-600">{activeCount}</p>
           </div>
           <div className="h-8 w-px bg-border mx-2" />
           <div className="text-center">
-            <p className="text-xs text-muted-foreground font-medium">Bank</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase">Machine Bank</p>
             <p className="text-2xl font-bold text-blue-600">{bankCount}</p>
           </div>
           <div className="h-8 w-px bg-border mx-2" />
           <div className="text-center">
-            <p className="text-xs text-muted-foreground font-medium">Repair / Breakdown</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase">Breakdown</p>
             <p className="text-2xl font-bold text-red-500">{breakdownCount}</p>
           </div>
         </CardContent>
@@ -89,7 +87,7 @@ export default function DashboardPage() {
                     Total <span className="font-bold text-foreground">{stats.total}</span>
                   </div>
                 </div>
-                <div className="relative w-40 h-32">
+                <div className="relative w-40 h-32 group">
                   <Image 
                     src={type.icon} 
                     alt={type.name} 
@@ -97,6 +95,9 @@ export default function DashboardPage() {
                     className="object-cover"
                     data-ai-hint="industrial machine"
                   />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <ImageIcon className="text-white size-6" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -119,7 +120,7 @@ export default function DashboardPage() {
         </Link>
 
         <Link href="/lines">
-          <div className="flex items-center gap-4 p-5 rounded-2xl bg-slate-800 text-white shadow-lg hover:bg-slate-900 transition-colors cursor-pointer">
+          <div className="flex items-center gap-4 p-5 rounded-2xl bg-slate-800 text-white shadow-lg hover:bg-slate-900 transition-colors">
             <div className="p-2 bg-white/20 rounded-xl">
               <Factory className="size-8" />
             </div>
