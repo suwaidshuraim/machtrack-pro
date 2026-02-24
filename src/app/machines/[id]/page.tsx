@@ -81,7 +81,7 @@ export default function MachineDetailPage() {
   }
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 max-w-6xl mx-auto">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full">
           <ArrowLeft className="size-4" />
@@ -118,19 +118,19 @@ export default function MachineDetailPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                    <Info className="size-3" /> Type
+                    <Info className="size-3" /> Asset Type
                   </span>
                   <p className="font-bold">{initialMachine.type}</p>
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                    <MapPin className="size-3" /> Current Location
+                    <MapPin className="size-3" /> Active Location
                   </span>
                   <p className="font-black text-blue-600">{initialMachine.location}</p>
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                    <CalendarDays className="size-3" /> Installed
+                    <CalendarDays className="size-3" /> Commission Date
                   </span>
                   <p className="font-bold">2023-05-12</p>
                 </div>
@@ -140,15 +140,15 @@ export default function MachineDetailPage() {
 
           <Tabs defaultValue="history" className="w-full">
             <TabsList className="grid w-full grid-cols-3 h-12 bg-slate-100 p-1">
-              <TabsTrigger value="history" className="font-bold">Transfer History</TabsTrigger>
+              <TabsTrigger value="history" className="font-bold">Movement Logs</TabsTrigger>
               <TabsTrigger value="maintenance" className="font-bold">Maintenance</TabsTrigger>
               <TabsTrigger value="details" className="font-bold">Specs</TabsTrigger>
             </TabsList>
-            <TabsContent value="history">
+            <TabsContent value="history" className="mt-4">
               <Card className="border-none shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <History className="size-5" /> Movement Logs
+                    <History className="size-5" /> Transfer History
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -165,12 +165,12 @@ export default function MachineDetailPage() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground italic">No transfer records found for this unit.</div>
+                    <div className="text-center py-8 text-muted-foreground italic">No historical movements logged.</div>
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
-            <TabsContent value="maintenance">
+            <TabsContent value="maintenance" className="mt-4">
               <Card className="border-none shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -207,43 +207,44 @@ export default function MachineDetailPage() {
         </div>
 
         <div className="space-y-6">
-          <AIInspectionCard machine={{...initialMachine, status: currentStatus}} />
-
-          <Card className="border-none shadow-lg">
-            <CardHeader className="pb-3">
+          {/* Status Change & Quick Controls - Very Prominent */}
+          <Card className="border-none shadow-xl ring-2 ring-blue-100">
+            <CardHeader className="pb-3 bg-blue-50/30">
               <div className="flex items-center gap-2">
                 <Settings2 className="size-5 text-blue-600" />
-                <CardTitle className="text-lg">Quick Control</CardTitle>
+                <CardTitle className="text-lg">Status & Control</CardTitle>
               </div>
-              <CardDescription>Manage unit status and deployment.</CardDescription>
+              <CardDescription>Update current status or trigger relocation.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Update Unit Status</label>
+            <CardContent className="space-y-5 pt-4">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase text-blue-600 tracking-widest">Current Unit Status</label>
                 <Select value={currentStatus} onValueChange={handleStatusChange}>
-                  <SelectTrigger className="w-full h-11 font-bold">
-                    <SelectValue placeholder="Select status" />
+                  <SelectTrigger className="w-full h-12 font-black text-lg border-2 border-blue-100 hover:border-blue-200 focus:ring-blue-100">
+                    <SelectValue placeholder="Select current status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Running" className="font-bold text-green-600">Running</SelectItem>
-                    <SelectItem value="Idle" className="font-bold text-yellow-600">Idle</SelectItem>
-                    <SelectItem value="Bank" className="font-bold text-blue-600">Bank</SelectItem>
-                    <SelectItem value="Breakdown" className="font-bold text-red-600">Breakdown</SelectItem>
-                    <SelectItem value="Repair" className="font-bold text-orange-600">Repair</SelectItem>
+                    <SelectItem value="Running" className="font-bold text-green-600 py-3">Running (Operational)</SelectItem>
+                    <SelectItem value="Idle" className="font-bold text-yellow-600 py-3">Idle (Standby)</SelectItem>
+                    <SelectItem value="Bank" className="font-bold text-blue-600 py-3">Bank (Inventory)</SelectItem>
+                    <SelectItem value="Breakdown" className="font-bold text-red-600 py-3">Breakdown (Immediate)</SelectItem>
+                    <SelectItem value="Repair" className="font-bold text-orange-600 py-3">Repair (Workshop)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="grid gap-3 pt-2">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 justify-start h-11 font-bold rounded-xl" variant="default" onClick={() => router.push('/transfer/scan')}>
-                  <Repeat className="mr-2 size-4" /> Transfer Machine
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 justify-start h-12 font-bold rounded-xl shadow-lg shadow-blue-100" variant="default" onClick={() => router.push('/transfer/scan')}>
+                  <Repeat className="mr-2 size-5" /> Relocate to Line/Bank
                 </Button>
-                <Button className="w-full justify-start h-11 font-bold border-slate-200 hover:bg-slate-50 rounded-xl" variant="outline">
-                  <QrCode className="mr-2 size-4" /> Print Asset Label
+                <Button className="w-full justify-start h-12 font-bold border-slate-200 hover:bg-slate-50 rounded-xl" variant="outline">
+                  <QrCode className="mr-2 size-5" /> Print Physical Label
                 </Button>
               </div>
             </CardContent>
           </Card>
+
+          <AIInspectionCard machine={{...initialMachine, status: currentStatus}} />
         </div>
       </div>
     </div>

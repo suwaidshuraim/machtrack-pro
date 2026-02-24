@@ -36,8 +36,7 @@ export default function AddMachinePage() {
   useEffect(() => {
     if (selectedType && TYPE_CONFIG[selectedType]) {
       const config = TYPE_CONFIG[selectedType]
-      // In a real app, we'd query the DB for the next count. 
-      // Here we simulate the "next" ID using a random offset from the base.
+      // Simulation: generate a "next" ID
       const nextNum = config.start + Math.floor(Math.random() * 50) + 1
       const generatedId = `${config.prefix}-${nextNum}`
       
@@ -91,20 +90,20 @@ export default function AddMachinePage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="type">Machine Type</Label>
+              <Label htmlFor="type" className="text-sm font-bold">Machine Type Dropdown</Label>
               <Select onValueChange={setSelectedType} required>
-                <SelectTrigger id="type" className="h-12">
-                  <SelectValue placeholder="Select type" />
+                <SelectTrigger id="type" className="h-12 text-base font-semibold">
+                  <SelectValue placeholder="Pick a machine category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Flat Bed">Flat Bed</SelectItem>
-                  <SelectItem value="Cylinder">Cylinder Bed</SelectItem>
-                  <SelectItem value="High Post">High Post</SelectItem>
-                  <SelectItem value="AMS">AMS Automated</SelectItem>
-                  <SelectItem value="Overlock">Overlock</SelectItem>
-                  <SelectItem value="Embossing">Embossing</SelectItem>
-                  <SelectItem value="Pressing">Pressing</SelectItem>
-                  <SelectItem value="Others">Others</SelectItem>
+                  <SelectItem value="Flat Bed" className="font-medium">Flat Bed</SelectItem>
+                  <SelectItem value="Cylinder" className="font-medium">Cylinder Bed</SelectItem>
+                  <SelectItem value="High Post" className="font-medium">High Post</SelectItem>
+                  <SelectItem value="AMS" className="font-medium">AMS Automated</SelectItem>
+                  <SelectItem value="Overlock" className="font-medium">Overlock</SelectItem>
+                  <SelectItem value="Embossing" className="font-medium">Embossing</SelectItem>
+                  <SelectItem value="Pressing" className="font-medium">Pressing</SelectItem>
+                  <SelectItem value="Others" className="font-medium">Others</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -134,7 +133,7 @@ export default function AddMachinePage() {
             <div className="space-y-2">
               <Label htmlFor="location">Initial Location</Label>
               <Select required>
-                <SelectTrigger id="location">
+                <SelectTrigger id="location" className="h-11">
                   <SelectValue placeholder="Select location" />
                 </SelectTrigger>
                 <SelectContent>
@@ -151,7 +150,7 @@ export default function AddMachinePage() {
             <div className="space-y-2">
               <Label htmlFor="status">Initial Status</Label>
               <Select defaultValue="Running">
-                <SelectTrigger id="status">
+                <SelectTrigger id="status" className="h-11">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -166,12 +165,12 @@ export default function AddMachinePage() {
 
             <div className="space-y-2">
               <Label htmlFor="history">Usage/History Notes</Label>
-              <Textarea id="history" placeholder="Describe the machine's intended use or background..." />
+              <Textarea id="history" placeholder="Describe the machine's intended use or background..." className="min-h-[100px]" />
             </div>
           </CardContent>
           <CardFooter className="flex gap-3 justify-end border-t p-6">
-            <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting || !selectedType} className="bg-blue-600 hover:bg-blue-700 min-w-[140px]">
+            <Button type="button" variant="outline" onClick={() => router.back()} className="h-11 px-6">Cancel</Button>
+            <Button type="submit" disabled={isSubmitting || !selectedType} className="bg-blue-600 hover:bg-blue-700 h-11 min-w-[160px] font-bold">
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               Save Asset
             </Button>
