@@ -26,22 +26,26 @@ const MACHINE_TYPES = [
 ]
 
 export default function DashboardPage() {
-  const totalCount = MACHINES.length
-  const activeCount = MACHINES.filter(m => m.location.startsWith('Line')).length
+  // Statistics calculation based on specified categories
+  // "Running" includes both Running and Idle as they are operational units
+  const runningCount = MACHINES.filter(m => m.status === 'Running' || m.status === 'Idle').length
   const bankCount = MACHINES.filter(m => m.status === 'Bank' || m.location === 'Machine Bank').length
-  const breakdownCount = MACHINES.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
+  const repairCount = MACHINES.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
+  
+  // Total must match the sum of these three core categories
+  const totalCount = runningCount + bankCount + repairCount
 
   const getTypeStats = (typeName: string) => {
     const filtered = MACHINES.filter(m => m.type === typeName)
     return {
       total: filtered.length,
-      running: filtered.filter(m => m.status === 'Running').length
+      running: filtered.filter(m => m.status === 'Running' || m.status === 'Idle').length
     }
   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Top Stats Bar */}
+      {/* Top Stats Bar - Synced categories */}
       <Card className="border-none shadow-md bg-white/80 backdrop-blur">
         <CardContent className="p-4 flex items-center justify-around">
           <div className="text-center">
@@ -50,8 +54,8 @@ export default function DashboardPage() {
           </div>
           <div className="h-8 w-px bg-border mx-2" />
           <div className="text-center">
-            <p className="text-xs text-muted-foreground font-medium uppercase">Active (Allotted)</p>
-            <p className="text-2xl font-bold text-green-600">{activeCount}</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase">Running (Active)</p>
+            <p className="text-2xl font-bold text-green-600">{runningCount}</p>
           </div>
           <div className="h-8 w-px bg-border mx-2" />
           <div className="text-center">
@@ -60,8 +64,8 @@ export default function DashboardPage() {
           </div>
           <div className="h-8 w-px bg-border mx-2" />
           <div className="text-center">
-            <p className="text-xs text-muted-foreground font-medium uppercase">Breakdown</p>
-            <p className="text-2xl font-bold text-red-500">{breakdownCount}</p>
+            <p className="text-xs text-muted-foreground font-medium uppercase">Repair / Breakdown</p>
+            <p className="text-2xl font-bold text-red-500">{repairCount}</p>
           </div>
         </CardContent>
       </Card>
@@ -87,7 +91,7 @@ export default function DashboardPage() {
                     Total <span className="font-bold text-foreground">{stats.total}</span>
                   </div>
                 </div>
-                <div className="relative w-40 h-32 group">
+                <div className="relative w-40 h-32 group border-l">
                   <Image 
                     src={type.icon} 
                     alt={type.name} 
