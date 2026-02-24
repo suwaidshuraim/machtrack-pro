@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -23,7 +24,7 @@ import { Search, ChevronRight, Plus, Filter, Box, ArrowLeft } from "lucide-react
 import { MACHINES } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 
-export default function MachineHistoryPage() {
+export default function MachineMasterPage() {
   const [search, setSearch] = useState("")
   const router = useRouter()
 
@@ -52,7 +53,7 @@ export default function MachineHistoryPage() {
             <ArrowLeft className="size-4" />
           </Button>
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900">Machine History</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900">Machine Master</h2>
             <p className="text-muted-foreground">Full registry of industrial assets and their current assignments.</p>
           </div>
         </div>
