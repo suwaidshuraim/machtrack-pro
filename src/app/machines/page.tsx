@@ -27,7 +27,8 @@ import {
   Filter, 
   Box, 
   ArrowLeft,
-  X
+  X,
+  Settings2
 } from "lucide-react"
 import { 
   DropdownMenu,
@@ -44,7 +45,11 @@ import { cn } from "@/lib/utils"
 export default function MachineMasterPage() {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
+  const [typeFilter, setTypeFilter] = useState("All")
   const router = useRouter()
+
+  // Get unique types for the filter dropdown
+  const availableTypes = Array.from(new Set(MACHINES.map(m => m.type)))
 
   const filteredMachines = MACHINES.filter(m => {
     const s = search.toLowerCase()
@@ -56,8 +61,9 @@ export default function MachineMasterPage() {
       m.status.toLowerCase().includes(s)
     
     const matchesStatus = statusFilter === "All" || m.status === statusFilter
+    const matchesType = typeFilter === "All" || m.type === typeFilter
     
-    return matchesSearch && matchesStatus
+    return matchesSearch && matchesStatus && matchesType
   })
 
   const getStatusColor = (status: string) => {
@@ -70,6 +76,14 @@ export default function MachineMasterPage() {
       default: return 'bg-slate-400';
     }
   }
+
+  const clearFilters = () => {
+    setSearch("")
+    setStatusFilter("All")
+    setTypeFilter("All")
+  }
+
+  const hasActiveFilters = search !== "" || statusFilter !== "All" || typeFilter !== "All"
 
   return (
     <div className="space-y-8">
@@ -84,6 +98,31 @@ export default function MachineMasterPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-red-500 font-bold">
+              Clear All
+            </Button>
+          )}
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className={cn("rounded-xl shadow-sm", typeFilter !== "All" && "border-blue-500 bg-blue-50")}>
+                <Settings2 className="mr-2 size-4" />
+                {typeFilter === "All" ? "Filter Type" : typeFilter}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuLabel>Filter by Machine Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuRadioGroup value={typeFilter} onValueChange={setTypeFilter}>
+                <DropdownMenuRadioItem value="All">All Types</DropdownMenuRadioItem>
+                {availableTypes.map(type => (
+                  <DropdownMenuRadioItem key={type} value={type}>{type}</DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className={cn("rounded-xl shadow-sm", statusFilter !== "All" && "border-blue-500 bg-blue-50")}>
