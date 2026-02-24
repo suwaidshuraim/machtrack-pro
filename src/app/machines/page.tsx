@@ -28,7 +28,8 @@ import {
   Box, 
   ArrowLeft,
   X,
-  Settings2
+  Settings2,
+  Settings
 } from "lucide-react"
 import { 
   DropdownMenu,
@@ -39,17 +40,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MACHINES } from "@/lib/mock-data"
+import { MACHINES, MACHINE_TYPES } from "@/lib/mock-data"
 import { cn } from "@/lib/utils"
 
 export default function MachineMasterPage() {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
   const [typeFilter, setTypeFilter] = useState("All")
+  const [locationFilter, setLocationFilter] = useState("All")
   const router = useRouter()
 
-  // Get unique types for the filter dropdown
-  const availableTypes = Array.from(new Set(MACHINES.map(m => m.type)))
+  // Get unique locations for the filter
+  const availableLocations = Array.from(new Set(MACHINES.map(m => m.location)))
 
   const filteredMachines = MACHINES.filter(m => {
     const s = search.toLowerCase()
@@ -62,8 +64,9 @@ export default function MachineMasterPage() {
     
     const matchesStatus = statusFilter === "All" || m.status === statusFilter
     const matchesType = typeFilter === "All" || m.type === typeFilter
+    const matchesLocation = locationFilter === "All" || m.location === locationFilter
     
-    return matchesSearch && matchesStatus && matchesType
+    return matchesSearch && matchesStatus && matchesType && matchesLocation
   })
 
   const getStatusColor = (status: string) => {
@@ -81,9 +84,10 @@ export default function MachineMasterPage() {
     setSearch("")
     setStatusFilter("All")
     setTypeFilter("All")
+    setLocationFilter("All")
   }
 
-  const hasActiveFilters = search !== "" || statusFilter !== "All" || typeFilter !== "All"
+  const hasActiveFilters = search !== "" || statusFilter !== "All" || typeFilter !== "All" || locationFilter !== "All"
 
   return (
     <div className="space-y-8">
@@ -104,45 +108,12 @@ export default function MachineMasterPage() {
             </Button>
           )}
           
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className={cn("rounded-xl shadow-sm", typeFilter !== "All" && "border-blue-500 bg-blue-50")}>
-                <Settings2 className="mr-2 size-4" />
-                {typeFilter === "All" ? "Filter Type" : typeFilter}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>Filter by Machine Type</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuRadioGroup value={typeFilter} onValueChange={setTypeFilter}>
-                <DropdownMenuRadioItem value="All">All Types</DropdownMenuRadioItem>
-                {availableTypes.map(type => (
-                  <DropdownMenuRadioItem key={type} value={type}>{type}</DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className={cn("rounded-xl shadow-sm", statusFilter !== "All" && "border-blue-500 bg-blue-50")}>
-                <Filter className="mr-2 size-4" />
-                {statusFilter === "All" ? "Filter Status" : statusFilter}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
-                <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="Running">Running</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="Idle">Idle</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="Bank">Bank</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="Breakdown">Breakdown</DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="Repair">Repair</DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button variant="outline" className="rounded-xl" asChild>
+            <Link href="/machines/types">
+              <Settings className="mr-2 size-4" />
+              Configure Types
+            </Link>
+          </Button>
 
           <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md" asChild>
             <Link href="/machines/new">
@@ -185,10 +156,58 @@ export default function MachineMasterPage() {
           <Table>
             <TableHeader className="bg-slate-50/50">
               <TableRow>
-                <TableHead className="font-bold py-4">ID / Serial</TableHead>
-                <TableHead className="font-bold">Machine Type</TableHead>
-                <TableHead className="font-bold">Current Location</TableHead>
-                <TableHead className="font-bold">Status</TableHead>
+                <TableHead className="font-bold py-4">
+                  <div className="flex items-center gap-2">
+                    ID / Serial
+                  </div>
+                </TableHead>
+                <TableHead className="font-bold">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                      Machine Type <Filter className="size-3" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuRadioGroup value={typeFilter} onValueChange={setTypeFilter}>
+                        <DropdownMenuRadioItem value="All">All Types</DropdownMenuRadioItem>
+                        {MACHINE_TYPES.map(type => (
+                          <DropdownMenuRadioItem key={type} value={type}>{type}</DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableHead>
+                <TableHead className="font-bold">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                      Location <Filter className="size-3" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuRadioGroup value={locationFilter} onValueChange={setLocationFilter}>
+                        <DropdownMenuRadioItem value="All">All Locations</DropdownMenuRadioItem>
+                        {availableLocations.map(loc => (
+                          <DropdownMenuRadioItem key={loc} value={loc}>{loc}</DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableHead>
+                <TableHead className="font-bold">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                      Status <Filter className="size-3" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                        <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="Running">Running</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="Idle">Idle</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="Bank">Bank</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="Breakdown">Breakdown</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem value="Repair">Repair</DropdownMenuRadioItem>
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableHead>
                 <TableHead className="text-right pr-6 font-bold">Action</TableHead>
               </TableRow>
             </TableHeader>

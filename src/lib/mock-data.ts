@@ -1,6 +1,18 @@
 
 import { Machine, Transfer, MaintenanceTask } from './types';
 
+// Centralized machine types that can be managed
+export let MACHINE_TYPES = [
+  "Flat Bed",
+  "Cylinder",
+  "High Post",
+  "AMS",
+  "Overlock",
+  "Embossing",
+  "Pressing",
+  "Others"
+];
+
 export const MACHINES: Machine[] = [
   ...Array(15).fill(null).map((_, i) => ({
     id: `FB-${100 + i}`,

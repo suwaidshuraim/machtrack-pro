@@ -11,17 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Save, Loader2, Sparkles } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-
-const TYPE_CONFIG: Record<string, { prefix: string, start: number }> = {
-  "Flat Bed": { prefix: "FB", start: 100 },
-  "Cylinder": { prefix: "CB", start: 200 },
-  "High Post": { prefix: "HP", start: 300 },
-  "AMS": { prefix: "AMS", start: 400 },
-  "Overlock": { prefix: "OL", start: 500 },
-  "Embossing": { prefix: "EM", start: 600 },
-  "Pressing": { prefix: "PR", start: 700 },
-  "Others": { prefix: "OT", start: 800 },
-}
+import { MACHINE_TYPES } from "@/lib/mock-data"
 
 export default function AddMachinePage() {
   const router = useRouter()
@@ -34,13 +24,14 @@ export default function AddMachinePage() {
 
   // Update ID and Serial when type changes
   useEffect(() => {
-    if (selectedType && TYPE_CONFIG[selectedType]) {
-      const config = TYPE_CONFIG[selectedType]
+    if (selectedType) {
+      // Prefix logic: First letters of each word
+      const prefix = selectedType.split(' ').map(word => word[0].toUpperCase()).join('')
       // Simulation: generate a "next" ID
-      const nextNum = config.start + Math.floor(Math.random() * 50) + 1
-      const generatedId = `${config.prefix}-${nextNum}`
+      const nextNum = 100 + Math.floor(Math.random() * 900)
+      const generatedId = `${prefix}-${nextNum}`
       
-      const generatedSerial = `SN-${config.prefix}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+      const generatedSerial = `SN-${prefix}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
       
       setAssetId(generatedId)
       setSerial(generatedSerial)
@@ -90,20 +81,15 @@ export default function AddMachinePage() {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="type" className="text-sm font-bold">Machine Type Dropdown</Label>
+              <Label htmlFor="type" className="text-sm font-bold">Machine Type</Label>
               <Select onValueChange={setSelectedType} required>
                 <SelectTrigger id="type" className="h-12 text-base font-semibold">
                   <SelectValue placeholder="Pick a machine category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Flat Bed" className="font-medium">Flat Bed</SelectItem>
-                  <SelectItem value="Cylinder" className="font-medium">Cylinder Bed</SelectItem>
-                  <SelectItem value="High Post" className="font-medium">High Post</SelectItem>
-                  <SelectItem value="AMS" className="font-medium">AMS Automated</SelectItem>
-                  <SelectItem value="Overlock" className="font-medium">Overlock</SelectItem>
-                  <SelectItem value="Embossing" className="font-medium">Embossing</SelectItem>
-                  <SelectItem value="Pressing" className="font-medium">Pressing</SelectItem>
-                  <SelectItem value="Others" className="font-medium">Others</SelectItem>
+                  {MACHINE_TYPES.map(type => (
+                    <SelectItem key={type} value={type} className="font-medium">{type}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
