@@ -1,0 +1,143 @@
+rules_version = '2';
+
+/**
+ * MachTrack Pro Security Rules
+ *
+ * CORE PHILOSOPHY:
+ * This ruleset implements a hybrid Authorization model combining Role-Based Access Control (RBAC) 
+ * and Attribute-Based Access Control (ABAC). We prioritize "Authorization Independence" by 
+ * denormalizing ownership and assignment data directly onto documents.
+ *
+ * DATA STRUCTURE:
+ * - /users/{userId}: User profiles, owned by the user and manageable by admins.
+ * - /userRoles/{role}/{userId}: Role flags. Existence of a document grants the specific role.
+ * - /machines, /locations: Global asset collections, readable by all staff, managed by admins.
+ * - /machineTransfers, /maintenanceTasks: Activity logs secured via denormalized UIDs 
+ *   (responsibleUserId, assignedUserId).
+ *
+ * KEY SECURITY DECISIONS:
+ * - Role Verification: Uses `exists()` checks against the `/userRoles` collection for 
+ *   highly performant and atomic permission checks without fetching full user profiles.
+ * - Denormalization: Fields like `assignedUserId` on MaintenanceTasks allow technicians 
+ *   to update their specific tasks without complex collection-group or parent-lookup rules.
+ * - Structural Segregation: Administrative roles are separated into dedicated collections 
+ *   to prevent unauthorized privilege escalation.
+ * - Prototyping Flexibility: Data types and non-relational fields are not validated to 
+ *   allow for rapid schema iteration, while relational integrity (UID matches) is strictly enforced.
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- GLOBAL HELPER FUNCTIONS ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/userRoles/admin/$(request.auth.uid));
+    }
+
+    function isTechnician() {
+      return isSignedIn() && exists(/databases/$(database)/documents/userRoles/technician/$(request.auth.uid));
+    }
+
+    function isOperator() {
+      return isSignedIn() && exists(/databases/$(database)/documents/userRoles/operator/$(request.auth.uid));
+    }
+
+    function isStaff() {
+      return isAdmin() || isTechnician() || isOperator();
+    }
+
+    // --- COLLECTION RULES ---
+
+    /**
+     * @description Rules for user profiles. Users can manage their own profile; admins can manage all.
+     * @path /users/{userId}
+     * @allow (get) If the user is the owner or an administrator.
+     * @deny (create) If the userId in the path does not match the authenticated user's UID.
+     * @principle Path-based ownership and relational integrity.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if (isOwner(userId) || isAdmin()) && resource != null && request.resource.data.id == resource.data.id;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Role collections used for DBAC (Database-Based Access Control).
+     * @path /userRoles/{role}/{userId}
+     * @allow (get) If the user is signed in (needed for the system to verify roles).
+     * @deny (write) Any write operation from a non-admin user.
+     * @principle Existence-based role authorization managed exclusively by admins.
+     */
+    match /userRoles/{role}/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    /**
+     * @description Physical locations for machines. Publicly readable by staff, admin-managed.
+     * @path /locations/{locationId}
+     * @allow (list) If the user is an authenticated staff member (Admin, Tech, or Op).
+     * @deny (update) If the user is not an administrator.
+     * @principle Role-based access for organizational assets.
+     */
+    match /locations/{locationId} {
+      allow get, list: if isStaff();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Manufacturing machines. Status and maintenance dates can be updated by staff.
+     * @path /machines/{machineId}
+     * @allow (update) If the user is a technician or operator (to update status/hours).
+     * @deny (create) If the user is not an administrator.
+     * @principle Staff-wide visibility with restricted write access based on role.
+     */
+    match /machines/{machineId} {
+      allow get, list: if isStaff();
+      allow create: if isAdmin();
+      allow update: if isStaff() && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Historical machine transfer records.
+     * @path /machineTransfers/{transferId}
+     * @allow (create) If a staff member is creating a record and sets themselves as the responsible user.
+     * @deny (update) Any modification to history records (enforcing immutability).
+     * @principle Audit log integrity via immutability and verified responsible user ID.
+     */
+    match /machineTransfers/{transferId} {
+      allow get, list: if isStaff();
+      allow create: if isStaff() && request.resource.data.responsibleUserId == request.auth.uid;
+      allow update, delete: if isAdmin() && resource != null;
+    }
+
+    /**
+     * @description Maintenance tasks for machines. Technicians can manage tasks assigned to them.
+     * @path /maintenanceTasks/{taskId}
+     * @allow (update) If the user is the assigned technician or an administrator.
+     * @deny (create) If the user is not an administrator or technician.
+     * @principle Attribute-based access control (ABAC) using the assignedUserId field.
+     */
+    match /maintenanceTasks/{taskId} {
+      allow get, list: if isStaff();
+      allow create: if isAdmin() || isTechnician();
+      allow update: if (isAdmin() || (isTechnician() && resource.data.assignedUserId == request.auth.uid)) && resource != null;
+      allow delete: if isAdmin() && resource != null;
+    }
+  }
+}

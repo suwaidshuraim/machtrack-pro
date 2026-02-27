@@ -1,9 +1,8 @@
-
 export const firebaseConfig = {
-  apiKey: "AIzaSyB-dummy-api-key",
-  authDomain: "machtrack-pro.firebaseapp.com",
-  projectId: "machtrack-pro",
-  storageBucket: "machtrack-pro.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  "projectId": "studio-5911456014-1d00e",
+  "appId": "1:238683136391:web:58d26e8fefbe47ecdc7322",
+  "apiKey": "AIzaSyCia2kIJHb8wfdYAEeRghVC3IRvecfdPjY",
+  "authDomain": "studio-5911456014-1d00e.firebaseapp.com",
+  "measurementId": "",
+  "messagingSenderId": "238683136391"
 };
