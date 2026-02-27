@@ -22,13 +22,13 @@ export default function LineMasterPage() {
     if (!firestore) return null
     return collection(firestore, "lines")
   }, [firestore])
-  const { data: lines, loading: linesLoading } = useCollection<Line>(linesQuery)
+  const { data: lines, isLoading: linesLoading } = useCollection<Line>(linesQuery)
 
   const machinesQuery = useMemoFirebase(() => {
     if (!firestore) return null
     return collection(firestore, "machines")
   }, [firestore])
-  const { data: machines, loading: machinesLoading } = useCollection<Machine>(machinesQuery)
+  const { data: machines, isLoading: machinesLoading } = useCollection<Machine>(machinesQuery)
 
   const filteredLines = useMemo(() => {
     if (!lines) return []

@@ -34,7 +34,7 @@ export default function TransfersPage() {
     return query(collection(firestore, "transfers"), orderBy("transferDate", "desc"))
   }, [firestore])
 
-  const { data: transfers, loading } = useCollection<Transfer>(transfersQuery)
+  const { data: transfers, isLoading: loading } = useCollection<Transfer>(transfersQuery)
 
   const filteredTransfers = transfers?.filter(t => 
     t.machineName?.toLowerCase().includes(search.toLowerCase()) || 

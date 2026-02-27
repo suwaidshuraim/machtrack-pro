@@ -48,7 +48,7 @@ export default function MachineDetailPage() {
     return doc(firestore, "machines", params.id as string)
   }, [firestore, params.id])
 
-  const { data: machine, loading } = useDoc<Machine>(machineRef)
+  const { data: machine, isLoading: loading } = useDoc<Machine>(machineRef)
 
   const transfersQuery = useMemoFirebase(() => {
     if (!firestore || !params.id) return null
