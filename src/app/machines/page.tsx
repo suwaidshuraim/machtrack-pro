@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { 
@@ -55,34 +55,38 @@ export default function MachineMasterPage() {
     if (!firestore) return null
     return collection(firestore, "machines")
   }, [firestore])
-
-  const { data: machines, loading } = useCollection<Machine>(machinesQuery)
+  const { data: machines, isLoading: machinesLoading } = useCollection<Machine>(machinesQuery)
 
   const typesQuery = useMemoFirebase(() => {
     if (!firestore) return null
     return collection(firestore, "machineTypes")
   }, [firestore])
-
   const { data: machineTypes } = useCollection<MachineType>(typesQuery)
 
-  const safeMachines = machines || []
-  const availableLocations = Array.from(new Set(safeMachines.map(m => m.location)))
+  const availableLocations = useMemo(() => {
+    if (!machines) return []
+    return Array.from(new Set(machines.map(m => m.location)))
+  }, [machines])
 
-  const filteredMachines = safeMachines.filter(m => {
-    const s = search.toLowerCase()
-    const matchesSearch = 
-      m.id.toLowerCase().includes(s) || 
-      m.type.toLowerCase().includes(s) ||
-      m.serialNumber.toLowerCase().includes(s) ||
-      m.location.toLowerCase().includes(s) ||
-      m.status.toLowerCase().includes(s)
-    
-    const matchesStatus = statusFilter === "All" || m.status === statusFilter
-    const matchesType = typeFilter === "All" || m.type === typeFilter
-    const matchesLocation = locationFilter === "All" || m.location === locationFilter
-    
-    return matchesSearch && matchesStatus && matchesType && matchesLocation
-  })
+  const filteredMachines = useMemo(() => {
+    if (!machines) return []
+    return machines.filter(m => {
+      const s = search.toLowerCase().trim()
+      const matchesSearch = 
+        !s ||
+        m.id.toLowerCase().includes(s) || 
+        m.type.toLowerCase().includes(s) ||
+        m.serialNumber.toLowerCase().includes(s) ||
+        m.location.toLowerCase().includes(s) ||
+        m.status.toLowerCase().includes(s)
+      
+      const matchesStatus = statusFilter === "All" || m.status === statusFilter
+      const matchesType = typeFilter === "All" || m.type === typeFilter
+      const matchesLocation = locationFilter === "All" || m.location === locationFilter
+      
+      return matchesSearch && matchesStatus && matchesType && matchesLocation
+    })
+  }, [machines, search, statusFilter, typeFilter, locationFilter])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -108,12 +112,12 @@ export default function MachineMasterPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full">
+          <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full shadow-sm">
             <ArrowLeft className="size-4" />
           </Button>
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900">Machine Master</h2>
-            <p className="text-muted-foreground">Full registry of industrial assets and their current assignments.</p>
+            <h2 className="text-3xl font-black tracking-tight text-slate-900">Machine Master</h2>
+            <p className="text-muted-foreground font-medium">Full registry of industrial assets and their assignments.</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -122,31 +126,29 @@ export default function MachineMasterPage() {
               Clear All
             </Button>
           )}
-          
-          <Button variant="outline" className="rounded-xl" asChild>
+          <Button variant="outline" className="rounded-xl font-bold h-11" asChild>
             <Link href="/machines/types">
               <Settings className="mr-2 size-4" />
               Configure Types
             </Link>
           </Button>
-
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md" asChild>
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg h-11 px-6 font-bold" asChild>
             <Link href="/machines/new">
               <Plus className="mr-2 size-4" />
-              Add New Machine
+              Register Asset
             </Link>
           </Button>
         </div>
       </div>
 
-      <Card className="border-none shadow-lg overflow-hidden">
+      <Card className="border-none shadow-xl overflow-hidden rounded-3xl">
         <CardHeader className="bg-white border-b py-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Search ID, Type, Serial, Location, or Status..." 
-                className="pl-10 h-11 bg-slate-50 border-none focus-visible:ring-1 focus-visible:ring-blue-200"
+                placeholder="Quick search every column..." 
+                className="pl-10 h-11 bg-slate-50 border-none focus-visible:ring-1 focus-visible:ring-blue-100 rounded-xl"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -159,99 +161,98 @@ export default function MachineMasterPage() {
                 </button>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-lg">
-                <Box className="size-4 text-slate-500" />
-                <span className="text-sm font-bold text-slate-700">{filteredMachines.length} Results</span>
-              </div>
+            <div className="flex items-center gap-1.5 px-4 py-2 bg-blue-50 rounded-2xl">
+              <Box className="size-4 text-blue-600" />
+              <span className="text-sm font-black text-blue-700">{filteredMachines.length} Assets Found</span>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {loading ? (
+          {machinesLoading ? (
             <div className="flex h-64 items-center justify-center">
-              <Loader2 className="size-8 animate-spin text-primary" />
+              <Loader2 className="size-10 animate-spin text-blue-500" />
             </div>
           ) : (
             <Table>
               <TableHeader className="bg-slate-50/50">
                 <TableRow>
-                  <TableHead className="font-bold py-4">ID / Serial</TableHead>
-                  <TableHead className="font-bold">
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest py-4">ID / Serial</TableHead>
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">
                     <DropdownMenu>
-                      <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors">
-                        Machine Type <Filter className="size-3" />
+                      <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors uppercase">
+                        Type <Filter className="size-3" />
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent>
+                      <DropdownMenuContent className="rounded-xl p-2 min-w-[200px]">
                         <DropdownMenuRadioGroup value={typeFilter} onValueChange={setTypeFilter}>
-                          <DropdownMenuRadioItem value="All">All Types</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="All" className="font-bold py-2">All Types</DropdownMenuRadioItem>
                           {machineTypes?.map(t => (
-                            <DropdownMenuRadioItem key={t.name} value={t.name}>{t.name}</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem key={t.name} value={t.name} className="font-medium py-2">{t.name}</DropdownMenuRadioItem>
                           ))}
                         </DropdownMenuRadioGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableHead>
-                  <TableHead className="font-bold">
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">
                     <DropdownMenu>
-                      <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                      <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors uppercase">
                         Location <Filter className="size-3" />
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent>
+                      <DropdownMenuContent className="rounded-xl p-2 min-w-[200px]">
                         <DropdownMenuRadioGroup value={locationFilter} onValueChange={setLocationFilter}>
-                          <DropdownMenuRadioItem value="All">All Locations</DropdownMenuRadioItem>
-                          {availableLocations.map(loc => (
-                            <DropdownMenuRadioItem key={loc} value={loc}>{loc}</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="All" className="font-bold py-2">All Locations</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="Machine Bank" className="font-medium py-2">Machine Bank</DropdownMenuRadioItem>
+                          {availableLocations.filter(l => l !== "Machine Bank").map(loc => (
+                            <DropdownMenuRadioItem key={loc} value={loc} className="font-medium py-2">{loc}</DropdownMenuRadioItem>
                           ))}
                         </DropdownMenuRadioGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableHead>
-                  <TableHead className="font-bold">
+                  <TableHead className="font-black text-[10px] uppercase tracking-widest">
                     <DropdownMenu>
-                      <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                      <DropdownMenuTrigger className="flex items-center gap-2 hover:text-blue-600 transition-colors uppercase">
                         Status <Filter className="size-3" />
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent>
+                      <DropdownMenuContent className="rounded-xl p-2 min-w-[200px]">
                         <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
-                          <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="Running">Running</DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="Idle">Idle</DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="Bank">Bank</DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="Breakdown">Breakdown</DropdownMenuRadioItem>
-                          <DropdownMenuRadioItem value="Repair">Repair</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="All" className="font-bold py-2">All Statuses</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="Running" className="text-green-600 font-bold py-2">Running</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="Idle" className="text-yellow-600 font-bold py-2">Idle</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="Bank" className="text-blue-600 font-bold py-2">Bank</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="Breakdown" className="text-red-600 font-bold py-2">Breakdown</DropdownMenuRadioItem>
+                          <DropdownMenuRadioItem value="Repair" className="text-orange-600 font-bold py-2">Repair</DropdownMenuRadioItem>
                         </DropdownMenuRadioGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableHead>
-                  <TableHead className="text-right pr-6 font-bold">Action</TableHead>
+                  <TableHead className="text-right pr-6 font-black text-[10px] uppercase tracking-widest">Audit</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredMachines.map((machine) => (
-                  <TableRow key={machine.id} className="hover:bg-slate-50/80 transition-colors">
-                    <TableCell className="py-4">
+                  <TableRow key={machine.id} className="hover:bg-blue-50/30 transition-colors">
+                    <TableCell className="py-5">
                       <div className="flex flex-col">
-                        <span className="font-mono text-xs font-bold text-blue-600">{machine.id}</span>
-                        <span className="text-[10px] text-muted-foreground">{machine.serialNumber}</span>
+                        <span className="font-black text-xs text-blue-600 tracking-tighter">{machine.id}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{machine.serialNumber}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="font-bold text-sm text-slate-800">{machine.type}</span>
+                      <span className="font-black text-sm text-slate-800">{machine.type}</span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200 font-bold">
+                      <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200 font-black text-[10px] uppercase tracking-wider py-1">
                         {machine.location}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className={cn("size-2 rounded-full", getStatusColor(machine.status))} />
-                        <span className="text-sm font-medium">{machine.status}</span>
+                        <div className={cn("size-2.5 rounded-full shadow-sm", getStatusColor(machine.status))} />
+                        <span className="text-sm font-bold text-slate-600">{machine.status}</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-right pr-6">
-                      <Button variant="ghost" size="icon" className="hover:bg-blue-50 text-blue-600" asChild>
+                      <Button variant="ghost" size="icon" className="hover:bg-blue-600 hover:text-white rounded-xl transition-all" asChild>
                         <Link href={`/machines/${machine.id}`}>
                           <ChevronRight className="h-5 w-5" />
                         </Link>
@@ -261,8 +262,12 @@ export default function MachineMasterPage() {
                 ))}
                 {filteredMachines.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                      No machines found matching your search or filter criteria.
+                    <TableCell colSpan={5} className="h-64 text-center">
+                      <div className="flex flex-col items-center gap-2 opacity-40">
+                        <Search className="size-12 mb-2" />
+                        <p className="font-black text-lg uppercase tracking-widest">No matching assets</p>
+                        <p className="text-sm font-medium">Try adjusting your filters or search term.</p>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}

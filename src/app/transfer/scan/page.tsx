@@ -131,27 +131,27 @@ export default function ScanTransferPage() {
 
       {!scannedMachine ? (
         <Tabs defaultValue="list" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="list" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-3 mb-6 h-12">
+            <TabsTrigger value="list" className="flex items-center gap-2 font-bold">
               <ListFilter className="size-4" /> Browse Master
             </TabsTrigger>
-            <TabsTrigger value="scan" className="flex items-center gap-2">
+            <TabsTrigger value="scan" className="flex items-center gap-2 font-bold">
               <QrCode className="size-4" /> Scan QR
             </TabsTrigger>
-            <TabsTrigger value="manual" className="flex items-center gap-2">
+            <TabsTrigger value="manual" className="flex items-center gap-2 font-bold">
               <Keyboard className="size-4" /> Manual ID
             </TabsTrigger>
           </TabsList>
           
           <TabsContent value="list">
-            <Card className="border-none shadow-lg">
+            <Card className="border-none shadow-xl rounded-3xl">
               <CardHeader className="pb-3">
-                <CardTitle>Master Registry</CardTitle>
+                <CardTitle className="font-black">Master Registry</CardTitle>
                 <div className="relative mt-2">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input 
                     placeholder="Search machines..." 
-                    className="pl-9 bg-slate-50"
+                    className="pl-9 bg-slate-50 h-11 rounded-xl border-none"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -160,7 +160,7 @@ export default function ScanTransferPage() {
               <CardContent>
                 {loading ? (
                   <div className="flex h-64 items-center justify-center">
-                    <Loader2 className="size-8 animate-spin text-primary" />
+                    <Loader2 className="size-8 animate-spin text-blue-500" />
                   </div>
                 ) : (
                   <ScrollArea className="h-[350px] pr-4">
@@ -168,22 +168,19 @@ export default function ScanTransferPage() {
                       {filteredMachines.map((m) => (
                         <div 
                           key={m.id}
-                          className="flex items-center justify-between p-3 rounded-xl border bg-white hover:border-blue-500 hover:bg-blue-50/50 cursor-pointer transition-all group"
+                          className="flex items-center justify-between p-4 rounded-2xl border-2 border-transparent bg-white hover:border-blue-500 hover:bg-blue-50/50 cursor-pointer transition-all group"
                           onClick={() => handleDetect(m.id)}
                         >
                           <div>
-                            <p className="font-bold text-sm group-hover:text-blue-600">{m.type}</p>
-                            <p className="font-mono text-[10px] text-muted-foreground font-bold uppercase">{m.id}</p>
+                            <p className="font-black text-sm group-hover:text-blue-600 leading-tight">{m.type}</p>
+                            <p className="font-mono text-[10px] text-muted-foreground font-black uppercase tracking-widest">{m.id}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-[10px] uppercase font-bold text-slate-400">Current</p>
-                            <p className="text-xs font-semibold">{m.location}</p>
+                            <p className="text-[9px] uppercase font-black text-slate-400 tracking-widest">Current</p>
+                            <p className="text-xs font-bold text-slate-700">{m.location}</p>
                           </div>
                         </div>
                       ))}
-                      {filteredMachines.length === 0 && (
-                        <div className="py-12 text-center text-muted-foreground">No assets found matching search.</div>
-                      )}
                     </div>
                   </ScrollArea>
                 )}
@@ -192,35 +189,35 @@ export default function ScanTransferPage() {
           </TabsContent>
 
           <TabsContent value="scan">
-            <Card className="border-none shadow-lg">
-              <CardHeader className="text-center">
-                <CardTitle>Align QR Code</CardTitle>
-                <CardDescription>Position asset label within the frame.</CardDescription>
+            <Card className="border-none shadow-xl rounded-3xl overflow-hidden">
+              <CardHeader className="text-center bg-slate-900 text-white">
+                <CardTitle className="font-black">Optical QR Scan</CardTitle>
+                <CardDescription className="text-slate-400">Position the asset label within the viewfinder.</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-8">
                 <CameraScanner onScan={(id) => handleDetect(id)} />
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="manual">
-            <Card className="border-none shadow-lg">
+            <Card className="border-none shadow-xl rounded-3xl">
               <CardHeader>
-                <CardTitle>Manual Asset Entry</CardTitle>
+                <CardTitle className="font-black">Direct ID Input</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="asset-id">Machine ID</Label>
+              <CardContent className="space-y-6 pt-4">
+                <div className="space-y-3">
+                  <Label htmlFor="asset-id" className="font-black text-[10px] uppercase tracking-widest text-blue-600">Machine ID</Label>
                   <div className="flex gap-2">
                     <Input 
                       id="asset-id"
                       placeholder="e.g. FB-101" 
-                      className="font-mono h-11"
+                      className="font-mono h-14 text-lg font-black border-2 rounded-2xl px-6"
                       value={manualId}
                       onChange={(e) => setManualId(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleDetect(manualId)}
                     />
-                    <Button onClick={() => handleDetect(manualId)} className="h-11">Detect</Button>
+                    <Button onClick={() => handleDetect(manualId)} className="h-14 px-8 rounded-2xl font-black bg-slate-900">Detect</Button>
                   </div>
                 </div>
               </CardContent>
@@ -228,54 +225,54 @@ export default function ScanTransferPage() {
           </TabsContent>
         </Tabs>
       ) : (
-        <Card className="border-none shadow-xl">
-          <CardHeader className="bg-slate-50 border-b">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <CheckCircle2 className="size-6 text-green-500" />
+        <Card className="border-none shadow-2xl rounded-3xl overflow-hidden">
+          <CardHeader className="bg-green-600 text-white p-8">
+            <CardTitle className="flex items-center gap-3 text-2xl font-black">
+              <CheckCircle2 className="size-8" />
               Machine Identified
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6 pt-6">
-            <div className="grid grid-cols-2 gap-4 bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+          <CardContent className="space-y-8 p-8">
+            <div className="grid grid-cols-2 gap-4 bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
               <div>
-                <Label className="text-[10px] uppercase text-blue-600 font-black tracking-widest">Asset</Label>
-                <p className="font-bold text-lg leading-tight">{scannedMachine.type}</p>
-                <p className="text-xs font-mono font-bold text-slate-500 uppercase">{scannedMachine.id}</p>
+                <Label className="text-[10px] uppercase text-slate-400 font-black tracking-widest">Asset</Label>
+                <p className="font-black text-xl text-slate-900 leading-tight">{scannedMachine.type}</p>
+                <p className="text-xs font-mono font-black text-blue-600 uppercase tracking-widest">{scannedMachine.id}</p>
               </div>
               <div className="text-right">
-                <Label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">At</Label>
-                <p className="font-black text-lg text-blue-600">{scannedMachine.location}</p>
+                <Label className="text-[10px] uppercase text-slate-400 font-black tracking-widest">Current Unit</Label>
+                <p className="font-black text-xl text-slate-700">{scannedMachine.location}</p>
               </div>
             </div>
 
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="font-bold">Target Destination</Label>
+              <div className="space-y-3">
+                <Label className="font-black text-[10px] uppercase tracking-widest text-blue-600">Target Destination</Label>
                 <Select onValueChange={setNewLocation} value={newLocation}>
-                  <SelectTrigger className="h-12 text-base">
+                  <SelectTrigger className="h-14 border-2 rounded-2xl font-black text-lg">
                     <SelectValue placeholder="Select target line or bank" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Machine Bank">Machine Bank</SelectItem>
+                  <SelectContent className="rounded-2xl">
+                    <SelectItem value="Machine Bank" className="font-black py-4">Machine Bank (Warehouse)</SelectItem>
                     {lines?.filter(l => l.name !== scannedMachine.location).map(loc => (
-                      <SelectItem key={loc.name} value={loc.name} className="py-3 font-medium">{loc.name}</SelectItem>
+                      <SelectItem key={loc.name} value={loc.name} className="py-4 font-bold">{loc.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            <div className="flex gap-3 pt-4">
-              <Button variant="outline" className="flex-1 h-12 rounded-xl" onClick={() => setScannedMachine(null)}>
+            <div className="flex gap-4 pt-4">
+              <Button variant="outline" className="flex-1 h-14 rounded-2xl font-black" onClick={() => setScannedMachine(null)}>
                 Cancel
               </Button>
               <Button 
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 rounded-xl" 
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black h-14 rounded-2xl text-lg shadow-xl shadow-blue-100" 
                 disabled={!newLocation || isProcessing}
                 onClick={handleTransfer}
               >
-                {isProcessing ? "Processing..." : "Complete Transfer"}
-                {!isProcessing && <ArrowRight className="ml-2 size-4" />}
+                {isProcessing ? "Processing..." : "Complete Relocation"}
+                {!isProcessing && <ArrowRight className="ml-2 size-5" />}
               </Button>
             </div>
           </CardContent>

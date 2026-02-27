@@ -29,21 +29,19 @@ export default function DashboardPage() {
 
   const { data: machines, isLoading: machinesLoading } = useCollection<Machine>(machinesQuery)
 
-  // Memoized derived stats for maximum performance
   const stats = useMemo(() => {
     const safeMachines = machines || []
     const running = safeMachines.filter(m => m.status === 'Running' || m.status === 'Idle').length
     const bank = safeMachines.filter(m => m.status === 'Bank').length
     const repair = safeMachines.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
     
-    // Only show categories that actually have machines
     const activeTypes = Array.from(new Set(safeMachines.map(m => m.type))).filter(Boolean)
     
     return {
       running,
       bank,
       repair,
-      total: running + bank + repair,
+      total: safeMachines.length,
       activeTypes
     }
   }, [machines])
@@ -172,31 +170,6 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Link href="/lines">
-          <div className="flex items-center justify-between p-6 bg-white border-2 border-slate-100 rounded-3xl shadow-sm hover:border-blue-200 transition-all group">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-slate-100 rounded-2xl group-hover:bg-blue-50 transition-colors">
-                <Factory className="size-6 text-slate-600 group-hover:text-blue-600" />
-              </div>
-              <span className="font-black text-slate-800 text-lg">Line Master</span>
-            </div>
-            <ChevronRight className="size-5 text-slate-300" />
-          </div>
-        </Link>
-        <Link href="/transfers">
-          <div className="flex items-center justify-between p-6 bg-white border-2 border-slate-100 rounded-3xl shadow-sm hover:border-blue-200 transition-all group">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-slate-100 rounded-2xl group-hover:bg-blue-50 transition-colors">
-                <History className="size-6 text-slate-600 group-hover:text-blue-600" />
-              </div>
-              <span className="font-black text-slate-800 text-lg">Log History</span>
-            </div>
-            <ChevronRight className="size-5 text-slate-300" />
-          </div>
-        </Link>
       </div>
     </div>
   )
