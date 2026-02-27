@@ -11,7 +11,8 @@ import {
   HelpCircle,
   Factory,
   QrCode,
-  History
+  History,
+  X
 } from "lucide-react"
 
 import {
@@ -23,64 +24,75 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar"
+import { Button } from "./ui/button"
 
 const mainNav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Machine Master", url: "/machines", icon: Box },
   { title: "Line Master", url: "/lines", icon: Factory },
-  { title: "Scan & Transfer", url: "/transfer/scan", icon: QrCode },
+  { title: "Machine Transfer", url: "/transfer/scan", icon: QrCode },
   { title: "Transfer History", url: "/transfers", icon: History },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { isMobile, setOpenMobile } = useSidebar()
 
   return (
-    <Sidebar variant="sidebar" collapsible="icon" className="border-r border-slate-200">
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-            <Factory className="size-6" />
+    <Sidebar variant="sidebar" collapsible="icon" className="border-r-2 border-slate-100 bg-white">
+      <SidebarHeader className="p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-2xl shadow-primary/20">
+              <Factory className="size-7" />
+            </div>
+            <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
+              <span className="font-black text-xl leading-none tracking-tighter text-slate-900 uppercase">MachTrack</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mt-1">Pro Series</span>
+            </div>
           </div>
-          <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-            <span className="font-black text-lg leading-tight tracking-tighter text-slate-900 uppercase">MachTrack</span>
-            <span className="text-[10px] font-black uppercase tracking-widest text-primary">Pro Series</span>
-          </div>
+          {isMobile && (
+            <Button variant="ghost" size="icon" onClick={() => setOpenMobile(false)} className="md:hidden">
+              <X className="size-5" />
+            </Button>
+          )}
         </div>
       </SidebarHeader>
-      <SidebarSeparator />
-      <SidebarContent>
-        <SidebarMenu className="px-3 py-4 gap-2">
+      <SidebarSeparator className="mx-6 opacity-50" />
+      <SidebarContent className="px-4 py-8">
+        <SidebarMenu className="gap-3">
           {mainNav.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 asChild
                 isActive={pathname === item.url}
                 tooltip={item.title}
-                className="h-11 rounded-xl transition-all duration-200"
+                className="h-12 rounded-2xl transition-all duration-300 font-bold px-4 data-[active=true]:bg-primary data-[active=true]:text-white data-[active=true]:shadow-lg data-[active=true]:shadow-primary/30"
+                onClick={() => isMobile && setOpenMobile(false)}
               >
                 <Link href={item.url}>
                   <item.icon className="size-5" />
-                  <span className="font-bold">{item.title}</span>
+                  <span className="font-bold tracking-tight">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-6">
         <SidebarMenu className="gap-2">
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Settings" className="h-11 rounded-xl">
+            <SidebarMenuButton tooltip="Settings" className="h-12 rounded-2xl font-bold px-4">
               <Settings className="size-5" />
-              <span className="font-bold group-data-[collapsible=icon]:hidden">Settings</span>
+              <span className="group-data-[collapsible=icon]:hidden">Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Help Center" className="h-11 rounded-xl">
+            <SidebarMenuButton tooltip="Help Center" className="h-12 rounded-2xl font-bold px-4">
               <HelpCircle className="size-5" />
-              <span className="font-bold group-data-[collapsible=icon]:hidden">Support</span>
+              <span className="group-data-[collapsible=icon]:hidden">Support</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

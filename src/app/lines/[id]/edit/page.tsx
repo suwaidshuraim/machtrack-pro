@@ -61,9 +61,16 @@ export default function EditLinePage() {
       await uploadBytes(sRef, file)
       const url = await getDownloadURL(sRef)
       setImageUrl(url)
-      toast({ title: "Image Uploaded", description: "Changes pending save." })
+      
+      // Update Firestore immediately if editing existing
+      if (lineRef) {
+        await updateDoc(lineRef, { imageUrl: url })
+      }
+      
+      toast({ title: "Image Uploaded", description: "Line preview updated." })
     } catch (error) {
-      toast({ variant: "destructive", title: "Upload Failed", description: "Could not save image." })
+      console.error("Upload failed", error)
+      toast({ variant: "destructive", title: "Upload Failed", description: "Storage error or size limit." })
     } finally {
       setUploading(false)
     }
@@ -91,55 +98,73 @@ export default function EditLinePage() {
     }
   }
 
-  if (loading) return <div className="flex h-64 items-center justify-center"><Loader2 className="animate-spin" /></div>
+  if (loading) return <div className="flex h-64 items-center justify-center"><Loader2 className="size-10 animate-spin text-primary" /></div>
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full">
-          <ArrowLeft className="size-4" />
+        <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full shadow-sm bg-white border-2 border-slate-100">
+          <ArrowLeft className="size-5" />
         </Button>
         <div>
           <h2 className="text-3xl font-black tracking-tight text-slate-900">Edit Production Line</h2>
-          <p className="text-muted-foreground font-medium">Modify existing floor zone configuration.</p>
+          <p className="text-muted-foreground font-medium">Modify floor zone parameters.</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <Card className="border-none shadow-2xl rounded-3xl overflow-hidden">
-          <CardHeader className="bg-slate-50/50 border-b py-8">
-            <CardTitle className="text-xl font-black flex items-center gap-3">
-              <Factory className="size-6 text-primary" />
-              Configure {lineName}
-            </CardTitle>
+        <Card className="border-none shadow-2xl rounded-3xl overflow-hidden bg-white">
+          <CardHeader className="bg-slate-50 border-b p-10">
+            <div className="flex items-center gap-5">
+              <div className="p-4 bg-primary/10 rounded-2xl">
+                <Factory className="size-8 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-black">Line: {lineName}</CardTitle>
+                <CardDescription className="text-base font-bold text-slate-400">Manage identification and mapping.</CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-8 p-8">
+          <CardContent className="space-y-10 p-10">
             <div className="space-y-4">
-              <Label className="font-black text-[10px] uppercase tracking-widest text-primary">Floor Visualization</Label>
-              <div className="relative h-48 w-full bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden group">
+              <Label className="font-black text-[11px] uppercase tracking-[0.2em] text-primary pl-1">Floor Visualization</Label>
+              <div className="relative h-64 w-full bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden group transition-all hover:border-primary/50">
                 {imageUrl ? (
                   <>
                     <Image src={imageUrl} alt="Line preview" fill className="object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                       <Button 
+                        type="button" 
+                        variant="secondary" 
+                        size="sm" 
+                        className="rounded-2xl font-black text-xs uppercase shadow-2xl"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Camera className="size-4 mr-2" />
+                        Replace Image
+                      </Button>
+                    </div>
                     <Button 
                       type="button" 
                       variant="destructive" 
                       size="icon" 
-                      className="absolute top-2 right-2 rounded-full h-8 w-8"
+                      className="absolute top-4 right-4 rounded-xl h-10 w-10 shadow-xl"
                       onClick={() => setImageUrl("")}
                     >
-                      <X className="size-4" />
+                      <X className="size-5" />
                     </Button>
                   </>
                 ) : (
-                  <div className="flex flex-col items-center gap-2 text-slate-400">
-                    {uploading ? <Loader2 className="animate-spin" /> : <Camera className="size-8" />}
-                    <p className="text-xs font-bold uppercase tracking-widest">Update Photo</p>
+                  <div className="flex flex-col items-center gap-3 text-slate-400">
+                    {uploading ? <Loader2 className="animate-spin size-10" /> : <Camera className="size-12" />}
+                    <p className="text-xs font-black uppercase tracking-widest">{uploading ? 'Processing Storage...' : 'Upload Floor Photo'}</p>
                     <Button 
                       type="button" 
                       variant="outline" 
                       size="sm" 
-                      className="mt-2 rounded-full font-black text-[10px] uppercase"
+                      className="mt-3 rounded-2xl font-black text-[10px] uppercase border-2 h-10 px-6"
                       onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
                     >
                       Select File
                     </Button>
@@ -149,24 +174,24 @@ export default function EditLinePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-3">
-                <Label htmlFor="line-name" className="font-black text-[10px] uppercase tracking-widest text-slate-400">Line Name</Label>
+                <Label htmlFor="line-name" className="font-black text-[11px] uppercase tracking-widest text-slate-400 pl-1">Line Name</Label>
                 <Input 
                   id="line-name" 
                   placeholder="e.g. Line 06" 
-                  className="h-12 rounded-xl border-2 font-bold"
+                  className="h-14 rounded-2xl border-2 font-bold text-lg focus-visible:ring-primary/20"
                   value={lineName}
                   onChange={(e) => setLineName(e.target.value)}
                   required 
                 />
               </div>
               <div className="space-y-3">
-                <Label htmlFor="supervisor" className="font-black text-[10px] uppercase tracking-widest text-slate-400">Supervisor Name</Label>
+                <Label htmlFor="supervisor" className="font-black text-[11px] uppercase tracking-widest text-slate-400 pl-1">Lead Supervisor</Label>
                 <Input 
                   id="supervisor" 
-                  placeholder="Primary overseer" 
-                  className="h-12 rounded-xl border-2 font-bold"
+                  placeholder="Full name" 
+                  className="h-14 rounded-2xl border-2 font-bold text-lg focus-visible:ring-primary/20"
                   value={supervisor}
                   onChange={(e) => setSupervisor(e.target.value)}
                 />
@@ -174,24 +199,24 @@ export default function EditLinePage() {
             </div>
 
             <div className="space-y-3">
-              <Label htmlFor="desc" className="font-black text-[10px] uppercase tracking-widest text-slate-400">Description</Label>
+              <Label htmlFor="desc" className="font-black text-[11px] uppercase tracking-widest text-slate-400 pl-1">Zone Responsibilities</Label>
               <Textarea 
                 id="desc" 
-                placeholder="Zone responsibilities..." 
-                className="rounded-xl border-2 min-h-[100px]"
+                placeholder="Describe machine types or processes in this zone..." 
+                className="rounded-2xl border-2 min-h-[140px] text-base font-medium p-5 focus-visible:ring-primary/20"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
           </CardContent>
-          <CardFooter className="flex gap-4 justify-end border-t bg-slate-50/50 p-8">
-            <Button type="button" variant="outline" onClick={() => router.back()} className="h-12 px-8 rounded-xl">Cancel</Button>
+          <CardFooter className="flex gap-4 justify-end border-t bg-slate-50 p-10">
+            <Button type="button" variant="outline" onClick={() => router.back()} className="h-14 px-10 rounded-2xl font-bold border-2">Cancel</Button>
             <Button 
               type="submit" 
               disabled={isSubmitting || uploading} 
-              className="bg-primary hover:bg-primary/90 h-12 min-w-[160px] font-black rounded-xl"
+              className="bg-primary hover:bg-primary/95 h-14 min-w-[200px] font-black text-lg rounded-2xl shadow-xl shadow-primary/20"
             >
-              {isSubmitting ? <Loader2 className="mr-2 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              {isSubmitting ? <Loader2 className="mr-3 animate-spin" /> : <Save className="mr-3 h-5 w-5" />}
               Save Changes
             </Button>
           </CardFooter>

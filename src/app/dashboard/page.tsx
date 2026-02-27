@@ -64,16 +64,18 @@ export default function DashboardPage() {
     const sRef = storageRef(storage, imagePath)
 
     try {
+      // 1. Upload to Storage
       await uploadBytes(sRef, file)
       const downloadURL = await getDownloadURL(sRef)
       
+      // 2. Update Firestore
       const typeDocRef = doc(firestore, "machineTypes", activeTypeId)
       await updateDoc(typeDocRef, { imageUrl: downloadURL })
       
-      toast({ title: "Image Updated", description: "Machine category image has been refreshed." })
+      toast({ title: "Success", description: "Machine image updated in real-time." })
     } catch (error) {
       console.error("Upload failed", error)
-      toast({ variant: "destructive", title: "Upload Failed", description: "Could not update image." })
+      toast({ variant: "destructive", title: "Upload Failed", description: "Storage or permission error." })
     } finally {
       setUploadingId(null)
       setActiveTypeId(null)
@@ -89,13 +91,13 @@ export default function DashboardPage() {
   if (machinesLoading || typesLoading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
-        <Loader2 className="size-10 animate-spin text-primary" />
+        <Loader2 className="size-12 animate-spin text-primary" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-10 pb-20">
+    <div className="space-y-12">
       <input 
         type="file" 
         ref={fileInputRef} 
@@ -106,34 +108,34 @@ export default function DashboardPage() {
 
       {/* SECTION 1: Summary Cards */}
       <section className="space-y-4">
-        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Fleet Overview</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-none shadow-md bg-white rounded-2xl">
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-1">
-              <Box className="size-5 text-primary mb-1" />
-              <span className="text-3xl font-black text-slate-900">{stats.total}</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Total Machines</span>
+        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Fleet Statistics</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          <Card className="border-none shadow-xl bg-white rounded-3xl overflow-hidden">
+            <CardContent className="p-6 md:p-8 flex flex-col items-center justify-center text-center">
+              <Box className="size-6 text-primary mb-2" />
+              <span className="text-4xl font-black text-slate-900 tracking-tighter">{stats.total}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Total Assets</span>
             </CardContent>
           </Card>
-          <Card className="border-none shadow-md bg-white rounded-2xl">
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-1">
-              <TrendingUp className="size-5 text-emerald-500 mb-1" />
-              <span className="text-3xl font-black text-slate-900">{stats.active}</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Active Units</span>
+          <Card className="border-none shadow-xl bg-white rounded-3xl overflow-hidden">
+            <CardContent className="p-6 md:p-8 flex flex-col items-center justify-center text-center">
+              <TrendingUp className="size-6 text-emerald-500 mb-2" />
+              <span className="text-4xl font-black text-slate-900 tracking-tighter">{stats.active}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">Operational</span>
             </CardContent>
           </Card>
-          <Card className="border-none shadow-md bg-white rounded-2xl">
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-1">
-              <Warehouse className="size-5 text-blue-500 mb-1" />
-              <span className="text-3xl font-black text-slate-900">{stats.bank}</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Machine Bank</span>
+          <Card className="border-none shadow-xl bg-white rounded-3xl overflow-hidden">
+            <CardContent className="p-6 md:p-8 flex flex-col items-center justify-center text-center">
+              <Warehouse className="size-6 text-blue-500 mb-2" />
+              <span className="text-4xl font-black text-slate-900 tracking-tighter">{stats.bank}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 mt-1">In Bank</span>
             </CardContent>
           </Card>
-          <Card className="border-none shadow-md bg-white rounded-2xl">
-            <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-1">
-              <Wrench className="size-5 text-red-500 mb-1" />
-              <span className="text-3xl font-black text-slate-900">{stats.repair}</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-red-500">Repair/Breakdown</span>
+          <Card className="border-none shadow-xl bg-white rounded-3xl overflow-hidden">
+            <CardContent className="p-6 md:p-8 flex flex-col items-center justify-center text-center">
+              <Wrench className="size-6 text-red-500 mb-2" />
+              <span className="text-4xl font-black text-slate-900 tracking-tighter">{stats.repair}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-red-500 mt-1">In Repair</span>
             </CardContent>
           </Card>
         </div>
@@ -141,30 +143,30 @@ export default function DashboardPage() {
 
       {/* SECTION 2: Operations */}
       <section className="space-y-4">
-        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Primary Operations</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Link href="/transfer/scan">
-            <Card className="border-none shadow-lg bg-primary text-white hover:bg-primary/95 transition-all active:scale-[0.98] rounded-2xl overflow-hidden group">
-              <CardContent className="p-8 flex items-center justify-between">
+        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Inventory Controls</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <Link href="/transfer/scan" className="group">
+            <Card className="border-none shadow-xl bg-primary text-white hover:bg-primary/95 transition-all rounded-3xl overflow-hidden h-full">
+              <CardContent className="p-8 md:p-10 flex items-center justify-between">
                 <div className="space-y-1">
                   <h3 className="text-2xl font-black tracking-tight">Machine Transfer</h3>
-                  <p className="text-primary-foreground/70 text-sm font-medium">Initiate equipment relocation</p>
+                  <p className="text-primary-foreground/70 text-sm font-medium">Relocate equipment across zones</p>
                 </div>
-                <div className="p-4 bg-white/10 rounded-2xl group-hover:scale-110 transition-transform">
-                  <Repeat className="size-8" />
+                <div className="p-5 bg-white/10 rounded-2xl group-hover:scale-110 transition-transform">
+                  <Repeat className="size-10" />
                 </div>
               </CardContent>
             </Card>
           </Link>
-          <Link href="/machines">
-            <Card className="border-none shadow-lg bg-slate-900 text-white hover:bg-slate-800 transition-all active:scale-[0.98] rounded-2xl overflow-hidden group">
-              <CardContent className="p-8 flex items-center justify-between">
+          <Link href="/machines" className="group">
+            <Card className="border-none shadow-xl bg-slate-900 text-white hover:bg-slate-800 transition-all rounded-3xl overflow-hidden h-full">
+              <CardContent className="p-8 md:p-10 flex items-center justify-between">
                 <div className="space-y-1">
                   <h3 className="text-2xl font-black tracking-tight">Machine Master</h3>
-                  <p className="text-slate-400 text-sm font-medium">Registry & technical specs</p>
+                  <p className="text-slate-400 text-sm font-medium">Complete technical asset registry</p>
                 </div>
-                <div className="p-4 bg-white/10 rounded-2xl group-hover:scale-110 transition-transform">
-                  <LayoutGrid className="size-8" />
+                <div className="p-5 bg-white/10 rounded-2xl group-hover:scale-110 transition-transform">
+                  <LayoutGrid className="size-10" />
                 </div>
               </CardContent>
             </Card>
@@ -174,30 +176,30 @@ export default function DashboardPage() {
 
       {/* SECTION 3: Logs & Layout */}
       <section className="space-y-4">
-        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Tracking & Assets</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Link href="/transfers">
-            <Card className="border-none shadow-lg bg-accent text-white hover:bg-accent/95 transition-all active:scale-[0.98] rounded-2xl overflow-hidden group">
-              <CardContent className="p-8 flex items-center justify-between">
+        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Floor Management</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <Link href="/transfers" className="group">
+            <Card className="border-none shadow-xl bg-accent text-white hover:bg-accent/95 transition-all rounded-3xl overflow-hidden h-full">
+              <CardContent className="p-8 md:p-10 flex items-center justify-between">
                 <div className="space-y-1">
                   <h3 className="text-2xl font-black tracking-tight">Transfer History</h3>
-                  <p className="text-accent-foreground/70 text-sm font-medium">Historical relocation logs</p>
+                  <p className="text-accent-foreground/70 text-sm font-medium">Audit logs for equipment movement</p>
                 </div>
-                <div className="p-4 bg-white/10 rounded-2xl group-hover:scale-110 transition-transform">
-                  <History className="size-8" />
+                <div className="p-5 bg-white/10 rounded-2xl group-hover:scale-110 transition-transform">
+                  <History className="size-10" />
                 </div>
               </CardContent>
             </Card>
           </Link>
-          <Link href="/lines">
-            <Card className="border-none shadow-lg bg-white text-slate-900 border border-slate-100 hover:bg-slate-50 transition-all active:scale-[0.98] rounded-2xl overflow-hidden group">
-              <CardContent className="p-8 flex items-center justify-between">
+          <Link href="/lines" className="group">
+            <Card className="border-none shadow-xl bg-white text-slate-900 border-2 border-slate-100 hover:bg-slate-50 transition-all rounded-3xl overflow-hidden h-full">
+              <CardContent className="p-8 md:p-10 flex items-center justify-between">
                 <div className="space-y-1">
-                  <h3 className="text-2xl font-black tracking-tight">Line Master</h3>
-                  <p className="text-slate-500 text-sm font-medium">Production floor management</p>
+                  <h3 className="text-2xl font-black tracking-tight text-primary">Line Master</h3>
+                  <p className="text-slate-500 text-sm font-medium">Production zone mapping</p>
                 </div>
-                <div className="p-4 bg-slate-100 rounded-2xl group-hover:scale-110 transition-transform text-primary">
-                  <Factory className="size-8" />
+                <div className="p-5 bg-slate-100 rounded-2xl group-hover:scale-110 transition-transform text-primary">
+                  <Factory className="size-10" />
                 </div>
               </CardContent>
             </Card>
@@ -207,10 +209,10 @@ export default function DashboardPage() {
 
       {/* SECTION 4: Machine Types */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between pr-2">
-          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Equipment Registry</h2>
-          <Button variant="ghost" size="sm" className="font-black text-[10px] uppercase text-primary" asChild>
-            <Link href="/machines/types">Configure Types</Link>
+        <div className="flex items-center justify-between">
+          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Equipment Categories</h2>
+          <Button variant="ghost" size="sm" className="font-black text-[10px] uppercase tracking-widest text-primary" asChild>
+            <Link href="/machines/types">Edit Registry</Link>
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -222,52 +224,52 @@ export default function DashboardPage() {
             }, {} as Record<string, number>)
 
             return (
-              <Card key={type.name} className="overflow-hidden border-none shadow-md hover:shadow-xl transition-all rounded-2xl bg-white flex flex-col">
-                <div className="relative h-44 w-full group">
+              <Card key={type.name} className="overflow-hidden border-none shadow-xl rounded-3xl bg-white flex flex-col group h-full">
+                <div className="relative h-56 w-full">
                   <Image 
-                    src={type.imageUrl || `https://picsum.photos/seed/${type.name}/400/300`} 
+                    src={type.imageUrl || `https://picsum.photos/seed/${type.name}/500/400`} 
                     alt={type.name} 
                     fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    className="object-cover transition-transform duration-1000 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="font-black text-white text-xl leading-tight">{type.name}</h3>
-                    <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">{typeMachines.length} Units Total</p>
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent" />
+                  <div className="absolute bottom-5 left-5 right-5">
+                    <h3 className="font-black text-white text-2xl leading-none">{type.name}</h3>
+                    <p className="text-white/60 text-[10px] font-black uppercase tracking-widest mt-1.5">{typeMachines.length} Units On Floor</p>
                   </div>
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute top-5 right-5">
                     <Button 
                       variant="secondary" 
                       size="sm" 
-                      className="h-8 rounded-full bg-white/90 backdrop-blur-sm font-black text-[10px] uppercase opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-10 rounded-2xl bg-white/95 backdrop-blur-md font-black text-[10px] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all shadow-xl"
                       onClick={() => triggerUpload(type.name)}
                       disabled={uploadingId === type.name}
                     >
-                      {uploadingId === type.name ? <Loader2 className="size-3 animate-spin" /> : <Camera className="size-3 mr-1" />}
+                      {uploadingId === type.name ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4 mr-2" />}
                       Change Image
                     </Button>
                   </div>
                 </div>
-                <CardContent className="p-6">
-                  <div className="space-y-4">
+                <CardContent className="p-8 flex-1 flex flex-col justify-between">
+                  <div className="space-y-6">
                     {type.description && (
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed italic line-clamp-2">
+                      <p className="text-xs text-slate-500 font-bold leading-relaxed italic line-clamp-3">
                         "{type.description}"
                       </p>
                     )}
                     
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="bg-emerald-50 rounded-xl p-2 border border-emerald-100 text-center">
-                        <p className="text-[8px] font-black text-emerald-600 uppercase">Run</p>
-                        <p className="text-sm font-black text-emerald-700">{breakdown['Running'] || 0}</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-emerald-50 rounded-2xl p-3 border border-emerald-100 text-center">
+                        <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">Active</p>
+                        <p className="text-xl font-black text-emerald-700">{breakdown['Running'] || 0}</p>
                       </div>
-                      <div className="bg-amber-50 rounded-xl p-2 border border-amber-100 text-center">
-                        <p className="text-[8px] font-black text-amber-600 uppercase">Idle</p>
-                        <p className="text-sm font-black text-amber-700">{breakdown['Idle'] || 0}</p>
+                      <div className="bg-amber-50 rounded-2xl p-3 border border-amber-100 text-center">
+                        <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-1">Idle</p>
+                        <p className="text-xl font-black text-amber-700">{breakdown['Idle'] || 0}</p>
                       </div>
-                      <div className="bg-red-50 rounded-xl p-2 border border-red-100 text-center">
-                        <p className="text-[8px] font-black text-red-600 uppercase">Rep</p>
-                        <p className="text-sm font-black text-red-700">{(breakdown['Repair'] || 0) + (breakdown['Breakdown'] || 0)}</p>
+                      <div className="bg-red-50 rounded-2xl p-3 border border-red-100 text-center">
+                        <p className="text-[9px] font-black text-red-600 uppercase tracking-widest mb-1">Issue</p>
+                        <p className="text-xl font-black text-red-700">{(breakdown['Repair'] || 0) + (breakdown['Breakdown'] || 0)}</p>
                       </div>
                     </div>
                   </div>
