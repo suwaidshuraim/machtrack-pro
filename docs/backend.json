@@ -28,7 +28,7 @@
         },
         "currentLocationId": {
           "type": "string",
-          "description": "Reference to the Location where the machine is currently located. (Relationship: Location 1:N Machine)"
+          "description": "Reference to the Location where the machine is currently located."
         },
         "status": {
           "type": "string",
@@ -36,16 +36,16 @@
         },
         "operationalHours": {
           "type": "number",
-          "description": "Total hours the machine has been in operation, used for AI-driven inspection scheduling."
+          "description": "Total hours the machine has been in operation."
         },
         "lastMaintenanceDate": {
           "type": "string",
-          "description": "Date and time of the last recorded maintenance activity for this machine.",
+          "description": "Date and time of the last recorded maintenance activity.",
           "format": "date-time"
         },
         "nextInspectionDate": {
           "type": "string",
-          "description": "Recommended date and time for the next machine inspection, potentially determined by Generative AI based on operational hours.",
+          "description": "Recommended date and time for the next machine inspection.",
           "format": "date-time"
         },
         "purchaseDate": {
@@ -58,18 +58,15 @@
         "id",
         "name",
         "serialNumber",
-        "model",
         "currentLocationId",
-        "status",
-        "operationalHours",
-        "purchaseDate"
+        "status"
       ]
     },
     "Location": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Location",
       "type": "object",
-      "description": "Represents a physical location within the manufacturing company where machines can be stored or operated.",
+      "description": "Represents a physical location within the manufacturing company.",
       "properties": {
         "id": {
           "type": "string",
@@ -77,15 +74,11 @@
         },
         "name": {
           "type": "string",
-          "description": "A descriptive name for the location (e.g., 'Assembly Line 1', 'Warehouse B')."
+          "description": "A descriptive name for the location."
         },
         "address": {
           "type": "string",
-          "description": "The physical address or specific area description of the location."
-        },
-        "description": {
-          "type": "string",
-          "description": "Additional details or notes about the location."
+          "description": "The physical address or specific area description."
         }
       },
       "required": [
@@ -94,11 +87,26 @@
         "address"
       ]
     },
+    "MachineType": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MachineType",
+      "type": "object",
+      "description": "Registry of valid machine categories.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the category (e.g., 'Flat Bed')."
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
     "User": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user within the MachTrack Pro application, responsible for tasks like machine transfers or maintenance. Assumes an external authentication system.",
+      "description": "Represents a user within the application.",
       "properties": {
         "id": {
           "type": "string",
@@ -119,7 +127,7 @@
         },
         "role": {
           "type": "string",
-          "description": "The role or permissions level of the user within the application (e.g., 'Administrator', 'Technician', 'Operator')."
+          "description": "The role or permissions level."
         }
       },
       "required": [
@@ -134,7 +142,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "MachineTransfer",
       "type": "object",
-      "description": "Records the historical movement of a machine from one location to another.",
+      "description": "Records the historical movement of a machine.",
       "properties": {
         "id": {
           "type": "string",
@@ -142,91 +150,33 @@
         },
         "machineId": {
           "type": "string",
-          "description": "Reference to the Machine that was transferred. (Relationship: Machine 1:N MachineTransfer)"
+          "description": "Reference to the Machine."
         },
-        "previousLocationId": {
+        "fromLocation": {
           "type": "string",
-          "description": "Reference to the Location where the machine was before the transfer. (Relationship: Location 1:N MachineTransfer)"
+          "description": "Original location."
         },
-        "newLocationId": {
+        "toLocation": {
           "type": "string",
-          "description": "Reference to the Location where the machine was transferred to. (Relationship: Location 1:N MachineTransfer)"
+          "description": "New destination."
         },
         "transferDate": {
           "type": "string",
-          "description": "Date and time when the machine transfer occurred.",
+          "description": "Date of transfer.",
           "format": "date-time"
         },
-        "responsibleUserId": {
+        "requestedBy": {
           "type": "string",
-          "description": "Reference to the User who was responsible for initiating or overseeing the transfer. (Relationship: User 1:N MachineTransfer)"
-        },
-        "notes": {
-          "type": "string",
-          "description": "Any additional comments or details regarding the machine transfer."
+          "description": "User who initiated the transfer."
         }
       },
       "required": [
         "id",
         "machineId",
-        "previousLocationId",
-        "newLocationId",
+        "fromLocation",
+        "toLocation",
         "transferDate",
-        "responsibleUserId"
-      ]
-    },
-    "MaintenanceTask": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "MaintenanceTask",
-      "type": "object",
-      "description": "Represents a scheduled or outstanding maintenance task for a specific machine.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the MaintenanceTask entity."
-        },
-        "machineId": {
-          "type": "string",
-          "description": "Reference to the Machine for which this maintenance task is scheduled. (Relationship: Machine 1:N MaintenanceTask)"
-        },
-        "description": {
-          "type": "string",
-          "description": "A detailed description of the maintenance task to be performed."
-        },
-        "priority": {
-          "type": "string",
-          "description": "The priority level of the maintenance task (e.g., 'High', 'Medium', 'Low')."
-        },
-        "scheduledDate": {
-          "type": "string",
-          "description": "The planned date and time for the maintenance task.",
-          "format": "date-time"
-        },
-        "completedDate": {
-          "type": "string",
-          "description": "The actual date and time when the maintenance task was completed.",
-          "format": "date-time"
-        },
-        "assignedUserId": {
-          "type": "string",
-          "description": "Reference to the User (technician) assigned to perform this maintenance task. (Relationship: User 1:N MaintenanceTask)"
-        },
-        "status": {
-          "type": "string",
-          "description": "The current status of the maintenance task (e.g., 'Scheduled', 'In Progress', 'Completed', 'Overdue', 'Cancelled')."
-        },
-        "notes": {
-          "type": "string",
-          "description": "Any additional notes or observations from the technician regarding the maintenance."
-        }
-      },
-      "required": [
-        "id",
-        "machineId",
-        "description",
-        "priority",
-        "scheduledDate",
-        "status"
+        "requestedBy"
       ]
     }
   },
@@ -245,77 +195,17 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores individual user profiles. Access is typically restricted to the user themselves and administrators. Includes user role for data purposes, but primary role-based authorization uses dedicated `/userRoles` collections.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user, typically matching Firebase Authentication UID."
-            }
-          ]
+          "description": "User profiles."
         }
       },
       {
-        "path": "/userRoles/admin/{userId}",
+        "path": "/machineTypes/{typeId}",
         "definition": {
-          "entityName": "User",
+          "entityName": "MachineType",
           "schema": {
-            "$ref": "#/backend/entities/User"
+            "$ref": "#/backend/entities/MachineType"
           },
-          "description": "Dedicated collection for administrative role authorization. The mere existence of a document here for a `userId` grants administrative privileges. This supports 'existence over content' for DBAC, enabling efficient security rule checks.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user (Firebase Auth UID) who possesses the admin role."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/userRoles/technician/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Dedicated collection for technician role authorization. Existence of a document here for a `userId` grants technician privileges. Used for DBAC and efficient security rule checks.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user (Firebase Auth UID) who possesses the technician role."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/userRoles/operator/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Dedicated collection for operator role authorization. Existence of a document here for a `userId` grants operator privileges. Used for DBAC and efficient security rule checks.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user (Firebase Auth UID) who possesses the operator role."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/locations/{locationId}",
-        "definition": {
-          "entityName": "Location",
-          "schema": {
-            "$ref": "#/backend/entities/Location"
-          },
-          "description": "Stores details about physical locations within the manufacturing company. Generally readable by all authenticated users, and modifiable by authorized roles (e.g., Administrators).",
-          "params": [
-            {
-              "name": "locationId",
-              "description": "The unique identifier for a specific physical location."
-            }
-          ]
+          "description": "Valid equipment categories."
         }
       },
       {
@@ -325,48 +215,19 @@
           "schema": {
             "$ref": "#/backend/entities/Machine"
           },
-          "description": "Stores details for each manufacturing machine. Globally readable by authenticated users; updates (status, location, maintenance dates) are restricted to authorized roles. This supports the dashboard overview.",
-          "params": [
-            {
-              "name": "machineId",
-              "description": "The unique identifier for a specific manufacturing machine."
-            }
-          ]
+          "description": "Manufacturing machines."
         }
       },
       {
-        "path": "/machineTransfers/{transferId}",
+        "path": "/transfers/{transferId}",
         "definition": {
           "entityName": "MachineTransfer",
           "schema": {
             "$ref": "#/backend/entities/MachineTransfer"
           },
-          "description": "Records the historical movement of machines. Includes denormalized 'responsibleUserId' for authorization independence, allowing direct rule checks without parent lookups. Supports efficient querying for transfer history logs.",
-          "params": [
-            {
-              "name": "transferId",
-              "description": "The unique identifier for a specific machine transfer record."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/maintenanceTasks/{taskId}",
-        "definition": {
-          "entityName": "MaintenanceTask",
-          "schema": {
-            "$ref": "#/backend/entities/MaintenanceTask"
-          },
-          "description": "Stores scheduled and outstanding maintenance tasks. Includes denormalized 'assignedUserId' for authorization independence, enabling rules to grant access to assigned technicians without external lookups. Supports efficient querying for outstanding tasks and per-technician task lists.",
-          "params": [
-            {
-              "name": "taskId",
-              "description": "The unique identifier for a specific maintenance task."
-            }
-          ]
+          "description": "Movement logs."
         }
       }
-    ],
-    "reasoning": "The recommended Firestore structure for MachTrack Pro prioritizes security, scalability, and debuggability by strictly adhering to the core design principles. We leverage a flat, top-level collection structure for most entities to optimize for common list queries (QAPs) required by the dashboard and tracking features, while carefully denormalizing authorization context to ensure Authorization Independence.\n\n1.  **Authorization Independence:** This is achieved primarily by storing all necessary authorization data directly within the document being accessed or by using dedicated, top-level role collections. For instance:\n    *   `MaintenanceTask` documents include `assignedUserId`, allowing rules to grant access to the assigned technician without needing to perform a `get()` on a parent machine or user document. Similarly, `MachineTransfer` documents include `responsibleUserId`.\n    *   Global roles (Administrator, Technician, Operator) are managed using dedicated collections like `/userRoles/admin/{userId}`. This 'existence over content' model allows for robust and atomic role checks using `exists()` in security rules, completely eliminating the need for `get()` calls to user profiles for role verification.\n    *   Entities like `Machine` and `Location` are treated as global company assets. Access to these will be based on a user's role, checked efficiently via the `/userRoles` collections, rather than complex hierarchical permissions.\n\n2.  **QAPs (Queries as Permissions) Support:** The use of top-level collections for `machines`, `locations`, `machineTransfers`, and `maintenanceTasks` directly supports the application's need for comprehensive list views (e.g., \"Transfer History Log\" and \"Machine Outstanding Record\").\n    *   For listing all machines or locations, direct queries on `/machines` or `/locations` are efficient and can be secured by checking the `request.auth.uid` against allowed roles in `/userRoles`.\n    *   To find all maintenance tasks assigned to a specific user or all transfers initiated by a user, a query on the `/maintenanceTasks` collection filtered by `assignedUserId` or on `/machineTransfers` filtered by `responsibleUserId` is efficient and inherently secure because the `userId` is part of the document data, enabling simple rule checks (e.g., `resource.data.assignedUserId == request.auth.uid`). This avoids inefficient collection group queries where possible and makes rules simpler to write and debug.\n\n3.  **Structural Segregation & Access Modeling:** All documents within a given collection (`/machines`, `/locations`, etc.) share a homogeneous security posture. User profiles are segregated under `/users/{userId}` for path-based ownership. Global roles are in their dedicated `/userRoles` collections. Collaborative or relational data (`MaintenanceTask`, `MachineTransfer`) includes explicit foreign keys (`machineId`, `assignedUserId`, `responsibleUserId`) within the document itself, allowing granular, self-contained authorization. This structure minimizes complexity in security rules, moving authorization logic from conditional `get()` statements to clear structural and field-based checks."
+    ]
   }
 }
