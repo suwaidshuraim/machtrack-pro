@@ -78,7 +78,7 @@ export default function LineMasterPage() {
     <div className="space-y-8 max-w-5xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full">
+          <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full shadow-sm">
             <ArrowLeft className="size-4" />
           </Button>
           <div>
@@ -91,12 +91,12 @@ export default function LineMasterPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input 
               placeholder="Search lines..." 
-              className="pl-9 h-11 w-48 md:w-64"
+              className="pl-9 h-11 w-48 md:w-64 bg-slate-50 border-none rounded-xl"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Button className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg h-11 font-bold" asChild>
+          <Button className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg h-11 font-bold rounded-xl" asChild>
             <Link href="/lines/new">
               <Plus className="mr-2 size-4" />
               Add Line
@@ -112,7 +112,7 @@ export default function LineMasterPage() {
           const repairCount = lineMachines.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
 
           return (
-            <Card key={line.id} className="overflow-hidden border-none shadow-md bg-white hover:shadow-xl transition-all group border-l-4 border-l-transparent hover:border-l-primary">
+            <Card key={line.id} className="overflow-hidden border-none shadow-md bg-white hover:shadow-xl transition-all group border-l-4 border-l-transparent hover:border-l-primary rounded-3xl">
               <CardHeader className="bg-slate-50/50 border-b py-5 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-primary rounded-2xl text-white shadow-lg">
@@ -169,7 +169,7 @@ export default function LineMasterPage() {
                         Audit Machines
                       </Link>
                    </Button>
-                   <Badge variant="outline" className="font-black text-[10px] uppercase tracking-widest">
+                   <Badge variant="outline" className="font-black text-[10px] uppercase tracking-widest rounded-full px-4">
                     Live Status: {repairCount > 0 ? 'Action Needed' : 'Nominal'}
                    </Badge>
                 </div>
@@ -177,19 +177,25 @@ export default function LineMasterPage() {
             </Card>
           )
         })}
+        {filteredLines.length === 0 && (
+          <div className="text-center py-20 opacity-40">
+            <Factory className="size-16 mx-auto mb-4" />
+            <p className="font-black text-lg uppercase tracking-widest">No production lines found</p>
+          </div>
+        )}
       </div>
 
       <AlertDialog open={!!lineToDelete} onOpenChange={() => setLineToDelete(null)}>
-        <AlertDialogContent className="rounded-2xl">
+        <AlertDialogContent className="rounded-3xl border-none shadow-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="font-black text-2xl">Delete line configuration?</AlertDialogTitle>
+            <AlertDialogDescription className="font-medium text-slate-500">
               This will permanently delete this production line from the registry. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 rounded-xl">Delete Line</AlertDialogAction>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="rounded-xl h-12 font-bold">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 rounded-xl h-12 font-black">Delete Line</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

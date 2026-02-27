@@ -113,7 +113,7 @@ export default function MachineMasterPage() {
     <div className="space-y-6 md:space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full shadow-sm hidden md:flex">
+          <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full shadow-sm">
             <ArrowLeft className="size-4" />
           </Button>
           <div>
@@ -162,9 +162,42 @@ export default function MachineMasterPage() {
                 </button>
               )}
             </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 rounded-full w-fit">
-              <Box className="size-3 md:size-4 text-primary" />
-              <span className="text-[10px] md:text-xs font-black text-primary">{filteredMachines.length} Assets</span>
+            <div className="flex items-center gap-3">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 md:h-11">
+                    <Filter className="mr-2 size-3" />
+                    Status: {statusFilter}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 rounded-xl font-bold">
+                  <DropdownMenuRadioGroup value={statusFilter} onValueChange={setStatusFilter}>
+                    <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="Running">Running</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="Idle">Idle</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="Bank">Bank</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="Breakdown">Breakdown</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="Repair">Repair</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 md:h-11">
+                    <Box className="mr-2 size-3" />
+                    Type: {typeFilter === 'All' ? 'All' : typeFilter}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 rounded-xl font-bold">
+                  <DropdownMenuRadioGroup value={typeFilter} onValueChange={setTypeFilter}>
+                    <DropdownMenuRadioItem value="All">All Types</DropdownMenuRadioItem>
+                    {machineTypes?.map(t => (
+                      <DropdownMenuRadioItem key={t.name} value={t.name}>{t.name}</DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </CardHeader>
@@ -245,7 +278,7 @@ export default function MachineMasterPage() {
               {filteredMachines.length === 0 && (
                 <div className="h-64 flex flex-col items-center justify-center gap-2 opacity-40">
                   <Search className="size-12 mb-2" />
-                  <p className="font-black text-lg uppercase tracking-widest">No assets found</p>
+                  <p className="font-black text-lg uppercase tracking-widest">No machines found</p>
                 </div>
               )}
             </>

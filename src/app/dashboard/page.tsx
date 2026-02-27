@@ -3,7 +3,7 @@
 
 import { useMemo, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { useFirestore, useCollection, useMemoFirebase, useFirebase } from "@/firebase"
+import { useCollection, useMemoFirebase, useFirebase } from "@/firebase"
 import { collection, doc, updateDoc } from "firebase/firestore"
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage"
 import { 
