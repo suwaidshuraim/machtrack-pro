@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -36,32 +37,32 @@ export function AppSidebar() {
   const pathname = usePathname()
 
   return (
-    <Sidebar variant="sidebar" collapsible="icon" className="border-r border-sidebar-border">
+    <Sidebar variant="sidebar" collapsible="icon" className="border-r border-slate-200">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
             <Factory className="size-6" />
           </div>
           <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
-            <span className="font-bold text-lg leading-tight tracking-tight text-sidebar-foreground">MachTrack</span>
-            <span className="text-xs text-sidebar-foreground/60">Machine Pro</span>
+            <span className="font-black text-lg leading-tight tracking-tighter text-slate-900 uppercase">MachTrack</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-primary">Pro Series</span>
           </div>
         </div>
       </SidebarHeader>
       <SidebarSeparator />
       <SidebarContent>
-        <SidebarMenu className="px-2 py-2">
+        <SidebarMenu className="px-3 py-4 gap-2">
           {mainNav.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 asChild
                 isActive={pathname === item.url}
                 tooltip={item.title}
-                className="transition-all duration-200"
+                className="h-11 rounded-xl transition-all duration-200"
               >
                 <Link href={item.url}>
                   <item.icon className="size-5" />
-                  <span className="font-medium">{item.title}</span>
+                  <span className="font-bold">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -69,17 +70,17 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-4">
-        <SidebarMenu>
+        <SidebarMenu className="gap-2">
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Settings">
+            <SidebarMenuButton tooltip="Settings" className="h-11 rounded-xl">
               <Settings className="size-5" />
-              <span className="font-medium group-data-[collapsible=icon]:hidden">Settings</span>
+              <span className="font-bold group-data-[collapsible=icon]:hidden">Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Support">
+            <SidebarMenuButton tooltip="Help Center" className="h-11 rounded-xl">
               <HelpCircle className="size-5" />
-              <span className="font-medium group-data-[collapsible=icon]:hidden">Support</span>
+              <span className="font-bold group-data-[collapsible=icon]:hidden">Support</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
