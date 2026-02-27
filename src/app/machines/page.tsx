@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo } from "react"
@@ -117,7 +116,7 @@ export default function MachineMasterPage() {
           </Button>
           <div>
             <h2 className="text-3xl font-black tracking-tight text-slate-900">Machine Master</h2>
-            <p className="text-muted-foreground font-medium">Full registry of industrial assets and their assignments.</p>
+            <p className="text-muted-foreground font-medium">Full registry of industrial machines and their assignments.</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -135,7 +134,7 @@ export default function MachineMasterPage() {
           <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg h-11 px-6 font-bold" asChild>
             <Link href="/machines/new">
               <Plus className="mr-2 size-4" />
-              Register Asset
+              Register Machine
             </Link>
           </Button>
         </div>
@@ -163,7 +162,7 @@ export default function MachineMasterPage() {
             </div>
             <div className="flex items-center gap-1.5 px-4 py-2 bg-blue-50 rounded-2xl">
               <Box className="size-4 text-blue-600" />
-              <span className="text-sm font-black text-blue-700">{filteredMachines.length} Assets Found</span>
+              <span className="text-sm font-black text-blue-700">{filteredMachines.length} Machines Found</span>
             </div>
           </div>
         </CardHeader>
@@ -265,7 +264,7 @@ export default function MachineMasterPage() {
                     <TableCell colSpan={5} className="h-64 text-center">
                       <div className="flex flex-col items-center gap-2 opacity-40">
                         <Search className="size-12 mb-2" />
-                        <p className="font-black text-lg uppercase tracking-widest">No matching assets</p>
+                        <p className="font-black text-lg uppercase tracking-widest">No matching machines</p>
                         <p className="text-sm font-medium">Try adjusting your filters or search term.</p>
                       </div>
                     </TableCell>

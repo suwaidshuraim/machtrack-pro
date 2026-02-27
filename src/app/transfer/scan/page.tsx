@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -68,7 +67,7 @@ export default function ScanTransferPage() {
       setScannedMachine(machine)
       toast({ title: "Machine Identified", description: `${machine.type} (${machine.id}) found at ${machine.location}` })
     } else {
-      toast({ variant: "destructive", title: "Asset Not Found", description: "Please check the ID and try again." })
+      toast({ variant: "destructive", title: "Machine Not Found", description: "Please check the ID and try again." })
     }
   }
 
@@ -125,7 +124,7 @@ export default function ScanTransferPage() {
         </Button>
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Machine Transfer</h2>
-          <p className="text-muted-foreground">Select an asset to relocate it to a new production area.</p>
+          <p className="text-muted-foreground">Select a machine to relocate it to a new production area.</p>
         </div>
       </div>
 
@@ -192,7 +191,7 @@ export default function ScanTransferPage() {
             <Card className="border-none shadow-xl rounded-3xl overflow-hidden">
               <CardHeader className="text-center bg-slate-900 text-white">
                 <CardTitle className="font-black">Optical QR Scan</CardTitle>
-                <CardDescription className="text-slate-400">Position the asset label within the viewfinder.</CardDescription>
+                <CardDescription className="text-slate-400">Position the machine label within the viewfinder.</CardDescription>
               </CardHeader>
               <CardContent className="p-8">
                 <CameraScanner onScan={(id) => handleDetect(id)} />
@@ -235,7 +234,7 @@ export default function ScanTransferPage() {
           <CardContent className="space-y-8 p-8">
             <div className="grid grid-cols-2 gap-4 bg-slate-50 p-6 rounded-3xl border-2 border-slate-100">
               <div>
-                <Label className="text-[10px] uppercase text-slate-400 font-black tracking-widest">Asset</Label>
+                <Label className="text-[10px] uppercase text-slate-400 font-black tracking-widest">Machine</Label>
                 <p className="font-black text-xl text-slate-900 leading-tight">{scannedMachine.type}</p>
                 <p className="text-xs font-mono font-black text-blue-600 uppercase tracking-widest">{scannedMachine.id}</p>
               </div>

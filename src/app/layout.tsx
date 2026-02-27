@@ -4,7 +4,7 @@ import { FirebaseClientProvider } from '@/firebase';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 export const metadata: Metadata = {
-  title: 'MachTrack Pro | Industrial Asset Management',
+  title: 'MachTrack Pro | Industrial Machine Management',
   description: 'Real-time manufacturing machine tracking and maintenance advisory.',
 };
 

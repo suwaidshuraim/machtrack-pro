@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -90,7 +89,7 @@ export default function MachineDetailPage() {
 
     updateDoc(machineRef, { status: value })
       .then(() => {
-        toast({ title: "Status Updated", description: `Asset ${machine.id} status changed to ${value}.` })
+        toast({ title: "Status Updated", description: `Machine ${machine.id} status changed to ${value}.` })
       })
       .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
@@ -140,7 +139,7 @@ export default function MachineDetailPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                    <Info className="size-3" /> Asset Type
+                    <Info className="size-3" /> Machine Type
                   </span>
                   <p className="font-bold">{machine.type}</p>
                 </div>

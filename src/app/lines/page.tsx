@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo } from "react"
@@ -79,7 +78,7 @@ export default function LineMasterPage() {
           <div className="relative group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground group-focus-within:text-blue-500 transition-colors" />
             <Input 
-              placeholder="Search lines or assets..." 
+              placeholder="Search lines or machines..." 
               className="pl-9 h-11 w-48 md:w-72 bg-white border-slate-200 focus-visible:ring-blue-100"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -125,7 +124,7 @@ export default function LineMasterPage() {
                     <CardTitle className="text-xl font-black text-slate-800">{line.name}</CardTitle>
                     <div className="flex items-center gap-3 mt-1">
                       <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                        {lineMachines.length} Assets
+                        {lineMachines.length} Machines
                       </span>
                       <div className="flex items-center gap-1.5">
                         <div className="size-2 rounded-full bg-green-500" />
@@ -151,7 +150,7 @@ export default function LineMasterPage() {
                     ))
                   ) : (
                     <div className="col-span-4 text-center py-6 text-sm text-slate-400 font-medium italic border-2 border-dashed rounded-2xl">
-                      No assets currently assigned to this line.
+                      No machines currently assigned to this line.
                     </div>
                   )}
                 </div>
@@ -160,12 +159,12 @@ export default function LineMasterPage() {
                    <Button variant="ghost" size="sm" className="text-blue-600 font-black hover:bg-blue-50 h-10 px-4 rounded-xl" asChild>
                       <Link href="/machines">
                         <LayoutGrid className="mr-2 size-4" />
-                        Audit Line Assets
+                        Audit Line Machines
                       </Link>
                    </Button>
                    <Button variant="outline" size="sm" className="rounded-xl font-black h-10 px-6 hover:bg-slate-900 hover:text-white transition-colors" asChild>
                       <Link href="/transfer/scan">
-                        Relocate Asset
+                        Relocate Machine
                       </Link>
                    </Button>
                 </div>

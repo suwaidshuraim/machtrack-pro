@@ -70,7 +70,7 @@ export default function DashboardPage() {
       <Card className="border-none shadow-xl bg-white/80 backdrop-blur-md rounded-3xl overflow-hidden">
         <CardContent className="p-8 flex flex-col md:flex-row items-center justify-around gap-6 md:gap-0">
           <div className="text-center group">
-            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-1">Total Assets</p>
+            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-1">Total Machines</p>
             <p className="text-4xl font-black text-slate-900 group-hover:scale-110 transition-transform">{stats.total}</p>
           </div>
           <div className="hidden md:block h-12 w-px bg-slate-100" />
@@ -98,7 +98,7 @@ export default function DashboardPage() {
               <Repeat className="size-8" />
             </div>
             <div>
-              <p className="font-black text-xl">Asset Transfer</p>
+              <p className="font-black text-xl">Machine Transfer</p>
               <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Instant Relocation</p>
             </div>
           </div>
@@ -110,7 +110,7 @@ export default function DashboardPage() {
               <LayoutGrid className="size-8" />
             </div>
             <div>
-              <p className="font-black text-xl">Asset Master</p>
+              <p className="font-black text-xl">Machine Master</p>
               <p className="text-blue-100 text-xs font-bold uppercase tracking-wider">Full Inventory Control</p>
             </div>
           </div>
@@ -162,7 +162,7 @@ export default function DashboardPage() {
           {stats.activeTypes.length === 0 && (
             <div className="col-span-2 py-16 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
               <p className="text-slate-500 font-black">No active machines found.</p>
-              <p className="text-slate-400 text-sm mt-1">Register assets to see your fleet analytics here.</p>
+              <p className="text-slate-400 text-sm mt-1">Register machines to see your fleet analytics here.</p>
             </div>
           )}
         </div>

@@ -95,7 +95,7 @@ export default function AddMachinePage() {
 
     try {
       await setDoc(machineRef, machineData)
-      toast({ title: "Registration Successful", description: `Asset ${assetId} added to registry.` })
+      toast({ title: "Registration Successful", description: `Machine ${assetId} added to registry.` })
       router.push('/machines')
     } catch (error) {
       const permissionError = new FirestorePermissionError({
@@ -116,7 +116,7 @@ export default function AddMachinePage() {
         </Button>
         <div>
           <h2 className="text-3xl font-black tracking-tight text-slate-900">Register Machine</h2>
-          <p className="text-muted-foreground font-medium">Onboard a new industrial asset to your fleet.</p>
+          <p className="text-muted-foreground font-medium">Onboard a new industrial machine to your fleet.</p>
         </div>
       </div>
 
@@ -143,12 +143,12 @@ export default function AddMachinePage() {
 
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Asset ID</Label>
-                <Input value={assetId} readOnly className="h-14 bg-slate-50 border-none font-mono text-blue-600 font-black text-lg rounded-2xl" />
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Machine ID</Label>
+                <input value={assetId} readOnly className="h-14 bg-slate-50 border-none font-mono text-blue-600 font-black text-lg rounded-2xl w-full px-4 focus:outline-none" />
               </div>
               <div className="space-y-3">
                 <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Serial Number</Label>
-                <Input value={serial} readOnly className="h-14 bg-slate-50 border-none font-mono font-bold text-lg rounded-2xl" />
+                <input value={serial} readOnly className="h-14 bg-slate-50 border-none font-mono font-bold text-lg rounded-2xl w-full px-4 focus:outline-none" />
               </div>
             </div>
 
@@ -203,7 +203,7 @@ export default function AddMachinePage() {
               className="bg-blue-600 hover:bg-blue-700 h-14 min-w-[200px] font-black text-lg rounded-2xl"
             >
               {isSubmitting ? <Loader2 className="mr-2 animate-spin" /> : <Save className="mr-2" />}
-              Save Asset
+              Save Machine
             </Button>
           </CardFooter>
         </Card>

@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -45,7 +44,7 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col overflow-hidden group-data-[collapsible=icon]:hidden">
             <span className="font-bold text-lg leading-tight tracking-tight text-sidebar-foreground">MachTrack</span>
-            <span className="text-xs text-sidebar-foreground/60">Asset Pro</span>
+            <span className="text-xs text-sidebar-foreground/60">Machine Pro</span>
           </div>
         </div>
       </SidebarHeader>

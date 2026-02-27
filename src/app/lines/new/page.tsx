@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -54,7 +53,7 @@ export default function AddLinePage() {
         </Button>
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Create Production Line</h2>
-          <p className="text-muted-foreground">Define a new zone or assembly line for asset allotment.</p>
+          <p className="text-muted-foreground">Define a new zone or assembly line for machine allotment.</p>
         </div>
       </div>
 
