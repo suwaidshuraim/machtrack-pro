@@ -22,30 +22,28 @@ export default function AddLinePage() {
   const [lineName, setLineName] = useState("")
   const [supervisor, setSupervisor] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!lineName.trim() || !firestore) return
+    if (!lineName.trim() || !firestore || isSubmitting) return
 
     setIsSubmitting(true)
     const lineId = lineName.trim()
     const lineRef = doc(firestore, "lines", lineId)
     const lineData = { name: lineId, supervisor: supervisor }
 
-    setDoc(lineRef, lineData)
-      .then(() => {
-        setIsSubmitting(false)
-        toast({ title: "Success", description: "New production line has been defined." })
-        router.push('/lines')
+    try {
+      await setDoc(lineRef, lineData)
+      toast({ title: "Success", description: "New production line has been defined." })
+      router.push('/lines')
+    } catch (error) {
+      const permissionError = new FirestorePermissionError({
+        path: lineRef.path,
+        operation: 'create',
+        requestResourceData: lineData,
       })
-      .catch(async (error) => {
-        setIsSubmitting(false)
-        const permissionError = new FirestorePermissionError({
-          path: lineRef.path,
-          operation: 'create',
-          requestResourceData: lineData,
-        })
-        errorEmitter.emit('permission-error', permissionError)
-      })
+      errorEmitter.emit('permission-error', permissionError)
+      setIsSubmitting(false)
+    }
   }
 
   return (

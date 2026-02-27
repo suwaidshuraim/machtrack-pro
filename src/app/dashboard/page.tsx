@@ -3,7 +3,7 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query } from "firebase/firestore"
+import { collection } from "firebase/firestore"
 import { 
   Repeat, 
   History, 
@@ -16,7 +16,7 @@ import {
 import Link from "next/link"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { Machine, MachineType } from "@/lib/types"
+import { Machine } from "@/lib/types"
 
 export default function DashboardPage() {
   const firestore = useFirestore()
@@ -28,14 +28,7 @@ export default function DashboardPage() {
 
   const { data: machines, loading: machinesLoading } = useCollection<Machine>(machinesQuery)
 
-  const typesQuery = useMemoFirebase(() => {
-    if (!firestore) return null
-    return collection(firestore, "machineTypes")
-  }, [firestore])
-
-  const { data: machineTypes, loading: typesLoading } = useCollection<MachineType>(typesQuery)
-
-  if (machinesLoading || typesLoading) {
+  if (machinesLoading && !machines) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
         <Loader2 className="size-8 animate-spin text-primary" />
@@ -49,7 +42,7 @@ export default function DashboardPage() {
   const repairCount = safeMachines.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
   const totalCount = runningCount + bankCount + repairCount
 
-  // Filter types to only those that actually have machines in the master
+  // derive active types from machine master
   const activeTypeNames = Array.from(new Set(safeMachines.map(m => m.type)))
   
   const MACHINE_TYPE_METADATA: Record<string, { icon: string, color: string }> = {
@@ -167,7 +160,7 @@ export default function DashboardPage() {
                     <h3 className="font-black text-xl mb-3 text-slate-800">{typeName}</h3>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <div className={cn("size-2.5 rounded-full animate-pulse", meta.color)} />
+                        <div className={cn("size-2.5 rounded-full", meta.color)} />
                         <span className="text-sm font-bold text-slate-600">{stats.running} Active nos</span>
                       </div>
                       <div className="text-sm text-muted-foreground font-medium">

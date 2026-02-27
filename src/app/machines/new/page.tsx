@@ -27,7 +27,7 @@ export default function AddMachinePage() {
   const [assetId, setAssetId] = useState("Select Type...")
   const [serial, setSerial] = useState("")
   const [location, setLocation] = useState("Machine Bank")
-  const [status, setStatus] = useState<MachineStatus>("Running")
+  const [status, setStatus] = useState<MachineStatus>("Bank")
   const [notes, setNotes] = useState("")
 
   const typesQuery = useMemoFirebase(() => {
@@ -56,9 +56,18 @@ export default function AddMachinePage() {
     }
   }, [selectedType])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Constraint: If location is Machine Bank, status must be Available (Bank) or Repair
+  useEffect(() => {
+    if (location === "Machine Bank") {
+      if (status !== "Bank" && status !== "Repair") {
+        setStatus("Bank")
+      }
+    }
+  }, [location, status])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedType || !firestore) return
+    if (!selectedType || !firestore || isSubmitting) return
 
     setIsSubmitting(true)
     const machineRef = doc(firestore, "machines", assetId)
@@ -75,21 +84,19 @@ export default function AddMachinePage() {
       imageUrl: `https://picsum.photos/seed/${assetId}/400/300`
     }
 
-    setDoc(machineRef, machineData)
-      .then(() => {
-        setIsSubmitting(false)
-        toast({ title: "Success", description: `Asset ${assetId} registered successfully.` })
-        router.push('/machines')
+    try {
+      await setDoc(machineRef, machineData)
+      toast({ title: "Success", description: `Asset ${assetId} registered successfully.` })
+      router.push('/machines')
+    } catch (error) {
+      const permissionError = new FirestorePermissionError({
+        path: machineRef.path,
+        operation: 'create',
+        requestResourceData: machineData,
       })
-      .catch(async (error) => {
-        setIsSubmitting(false)
-        const permissionError = new FirestorePermissionError({
-          path: machineRef.path,
-          operation: 'create',
-          requestResourceData: machineData,
-        })
-        errorEmitter.emit('permission-error', permissionError)
-      })
+      errorEmitter.emit('permission-error', permissionError)
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -159,16 +166,24 @@ export default function AddMachinePage() {
 
             <div className="space-y-2">
               <Label htmlFor="status">Initial Status</Label>
-              <Select onValueChange={(v) => setStatus(v as MachineStatus)} defaultValue="Running">
+              <Select onValueChange={(v) => setStatus(v as MachineStatus)} value={status}>
                 <SelectTrigger id="status" className="h-11">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Running">Running</SelectItem>
-                  <SelectItem value="Idle">Idle</SelectItem>
-                  <SelectItem value="Bank">Bank</SelectItem>
-                  <SelectItem value="Breakdown">Breakdown</SelectItem>
-                  <SelectItem value="Repair">Repair</SelectItem>
+                  {location === "Machine Bank" ? (
+                    <>
+                      <SelectItem value="Bank">Available</SelectItem>
+                      <SelectItem value="Repair">Repair</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="Running">Running</SelectItem>
+                      <SelectItem value="Idle">Idle</SelectItem>
+                      <SelectItem value="Breakdown">Breakdown</SelectItem>
+                      <SelectItem value="Repair">Repair</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>

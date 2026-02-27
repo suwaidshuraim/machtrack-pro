@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, doc, updateDoc, addDoc, query, where } from "firebase/firestore"
+import { collection, doc, updateDoc, addDoc } from "firebase/firestore"
 import { Machine, Line } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
@@ -72,15 +72,17 @@ export default function ScanTransferPage() {
     }
   }
 
-  const handleTransfer = () => {
-    if (!scannedMachine || !newLocation || !firestore) return
+  const handleTransfer = async () => {
+    if (!scannedMachine || !newLocation || !firestore || isProcessing) return
 
     setIsProcessing(true)
     const machineRef = doc(firestore, "machines", scannedMachine.id)
     const transferRef = collection(firestore, "transfers")
     const oldLocation = scannedMachine.location
 
-    // Log the transfer
+    // Logic: If moving to Machine Bank, set status to Bank (Available)
+    const statusUpdate = newLocation === "Machine Bank" ? "Bank" : scannedMachine.status
+
     const transferData = {
       machineId: scannedMachine.id,
       machineName: scannedMachine.name || scannedMachine.id,
@@ -91,28 +93,27 @@ export default function ScanTransferPage() {
       status: "Completed"
     }
 
-    addDoc(transferRef, transferData)
-      .catch(async (e) => {
-        const err = new FirestorePermissionError({ path: 'transfers', operation: 'create', requestResourceData: transferData })
-        errorEmitter.emit('permission-error', err)
+    try {
+      // Log the transfer
+      await addDoc(transferRef, transferData)
+      
+      // Update machine location and potentially status
+      await updateDoc(machineRef, { 
+        location: newLocation,
+        status: statusUpdate
       })
-
-    // Update machine location
-    updateDoc(machineRef, { location: newLocation })
-      .then(() => {
-        setIsProcessing(false)
-        toast({ title: "Transfer Completed", description: `${scannedMachine.id} relocated to ${newLocation}.` })
-        router.push('/dashboard')
+      
+      toast({ title: "Transfer Completed", description: `${scannedMachine.id} relocated to ${newLocation}.` })
+      router.push('/dashboard')
+    } catch (error) {
+      const permissionError = new FirestorePermissionError({
+        path: machineRef.path,
+        operation: 'update',
+        requestResourceData: { location: newLocation },
       })
-      .catch(async (error) => {
-        setIsProcessing(false)
-        const permissionError = new FirestorePermissionError({
-          path: machineRef.path,
-          operation: 'update',
-          requestResourceData: { location: newLocation },
-        })
-        errorEmitter.emit('permission-error', permissionError)
-      })
+      errorEmitter.emit('permission-error', permissionError)
+      setIsProcessing(false)
+    }
   }
 
   const filteredMachines = machines?.filter(m => 
