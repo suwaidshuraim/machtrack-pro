@@ -21,6 +21,8 @@ export interface Line {
 
 export interface MachineType {
   name: string;
+  description?: string;
+  imageUrl?: string;
 }
 
 export interface Transfer {
