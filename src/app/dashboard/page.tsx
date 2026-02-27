@@ -10,7 +10,9 @@ import {
   LayoutGrid, 
   Loader2,
   AlertCircle,
-  TrendingUp
+  TrendingUp,
+  Factory,
+  History
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -42,14 +44,12 @@ export default function DashboardPage() {
   const stats = useMemo(() => {
     const safeMachines = machines || []
     const running = safeMachines.filter(m => m.status === 'Running' || m.status === 'Idle').length
-    const bank = safeMachines.filter(m => m.status === 'Bank').length
     const repair = safeMachines.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
     
     const activeTypes = Array.from(new Set(safeMachines.map(m => m.type))).filter(Boolean)
     
     return {
       running,
-      bank,
       repair,
       total: safeMachines.length,
       activeTypes
@@ -71,7 +71,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 md:space-y-8 pb-12">
-      {/* Quick Action Tiles */}
+      {/* Primary Action Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Link href="/transfer/scan" className="col-span-1">
           <Card className="border-none shadow-md bg-primary text-white hover:bg-primary/90 transition-all active:scale-95 h-full rounded-2xl">
@@ -93,18 +93,42 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </Link>
-        <Card className="col-span-1 border-none shadow-md bg-white rounded-2xl">
+        <Link href="/lines" className="col-span-1">
+          <Card className="border-none shadow-md bg-slate-800 text-white hover:bg-slate-700 transition-all active:scale-95 h-full rounded-2xl">
+            <CardContent className="p-4 md:p-6 flex flex-col items-center justify-center text-center gap-2">
+              <div className="p-2 md:p-3 bg-white/10 rounded-xl">
+                <Factory className="size-5 md:size-6" />
+              </div>
+              <span className="font-bold text-xs md:text-sm">Line Master</span>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/transfers" className="col-span-1">
+          <Card className="border-none shadow-md bg-white text-slate-900 border border-slate-100 hover:bg-slate-50 transition-all active:scale-95 h-full rounded-2xl">
+            <CardContent className="p-4 md:p-6 flex flex-col items-center justify-center text-center gap-2">
+              <div className="p-2 md:p-3 bg-slate-100 rounded-xl">
+                <History className="size-5 md:size-6 text-primary" />
+              </div>
+              <span className="font-bold text-xs md:text-sm text-slate-600">Transfer History</span>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-2 gap-4">
+        <Card className="border-none shadow-md bg-white rounded-2xl">
           <CardContent className="p-4 md:p-6 flex flex-col items-center justify-center text-center gap-1">
             <TrendingUp className="size-5 text-emerald-500 mb-1" />
             <span className="text-2xl font-black text-slate-900">{stats.running}</span>
-            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Active</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Active Units</span>
           </CardContent>
         </Card>
-        <Card className="col-span-1 border-none shadow-md bg-white rounded-2xl">
+        <Card className="border-none shadow-md bg-white rounded-2xl">
           <CardContent className="p-4 md:p-6 flex flex-col items-center justify-center text-center gap-1">
             <AlertCircle className="size-5 text-red-500 mb-1" />
             <span className="text-2xl font-black text-slate-900">{stats.repair}</span>
-            <span className="text-[10px] font-black uppercase tracking-widest text-red-500">Repair</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-red-500">In Repair</span>
           </CardContent>
         </Card>
       </div>
