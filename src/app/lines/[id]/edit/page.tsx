@@ -1,8 +1,8 @@
 
 "use client"
 
-import { useState, useRef } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useRef, useEffect } from "react"
+import { useRouter, useParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,18 +10,27 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Save, Loader2, Factory, Camera, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useFirestore, useFirebase } from "@/firebase"
-import { doc, setDoc } from "firebase/firestore"
+import { useFirestore, useFirebase, useDoc, useMemoFirebase } from "@/firebase"
+import { doc, updateDoc } from "firebase/firestore"
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage"
 import Image from "next/image"
+import { Line } from "@/lib/types"
 
-export default function AddLinePage() {
+export default function EditLinePage() {
   const router = useRouter()
+  const params = useParams()
   const { toast } = useToast()
   const firestore = useFirestore()
   const { firebaseApp } = useFirebase()
-  const [isSubmitting, setIsSubmitting] = useState(false)
   
+  const lineRef = useMemoFirebase(() => {
+    if (!firestore || !params.id) return null
+    return doc(firestore, "lines", params.id as string)
+  }, [firestore, params.id])
+
+  const { data: line, isLoading: loading } = useDoc<Line>(lineRef)
+  
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [lineName, setLineName] = useState("")
   const [supervisor, setSupervisor] = useState("")
   const [description, setDescription] = useState("")
@@ -30,20 +39,29 @@ export default function AddLinePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
 
+  useEffect(() => {
+    if (line) {
+      setLineName(line.name)
+      setSupervisor(line.supervisor || "")
+      setDescription(line.description || "")
+      setImageUrl(line.imageUrl || "")
+    }
+  }, [line])
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !firebaseApp) return
 
     setUploading(true)
     const storage = getStorage(firebaseApp)
-    const imagePath = `lines/temp/${Date.now()}_${file.name}`
+    const imagePath = `lines/${params.id}/${Date.now()}_${file.name}`
     const sRef = storageRef(storage, imagePath)
 
     try {
       await uploadBytes(sRef, file)
       const url = await getDownloadURL(sRef)
       setImageUrl(url)
-      toast({ title: "Image Uploaded", description: "Line preview is ready." })
+      toast({ title: "Image Uploaded", description: "Changes pending save." })
     } catch (error) {
       toast({ variant: "destructive", title: "Upload Failed", description: "Could not save image." })
     } finally {
@@ -53,14 +71,10 @@ export default function AddLinePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!lineName.trim() || !firestore || isSubmitting) return
+    if (!lineName.trim() || !lineRef || isSubmitting) return
 
     setIsSubmitting(true)
-    const lineId = lineName.trim().replace(/\s+/g, '-').toLowerCase()
-    const lineRef = doc(firestore, "lines", lineId)
-    
     const lineData = { 
-      id: lineId,
       name: lineName.trim(), 
       supervisor: supervisor.trim(),
       description: description.trim(),
@@ -68,14 +82,16 @@ export default function AddLinePage() {
     }
 
     try {
-      await setDoc(lineRef, lineData)
-      toast({ title: "Success", description: "New production line has been defined." })
+      await updateDoc(lineRef, lineData)
+      toast({ title: "Updated", description: "Line configuration saved." })
       router.push('/lines')
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: "Could not save production line." })
+      toast({ variant: "destructive", title: "Error", description: "Could not update production line." })
       setIsSubmitting(false)
     }
   }
+
+  if (loading) return <div className="flex h-64 items-center justify-center"><Loader2 className="animate-spin" /></div>
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -84,23 +100,18 @@ export default function AddLinePage() {
           <ArrowLeft className="size-4" />
         </Button>
         <div>
-          <h2 className="text-3xl font-black tracking-tight text-slate-900">Define Production Line</h2>
-          <p className="text-muted-foreground font-medium">Create a new floor zone for machine allotment.</p>
+          <h2 className="text-3xl font-black tracking-tight text-slate-900">Edit Production Line</h2>
+          <p className="text-muted-foreground font-medium">Modify existing floor zone configuration.</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit}>
         <Card className="border-none shadow-2xl rounded-3xl overflow-hidden">
           <CardHeader className="bg-slate-50/50 border-b py-8">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-primary/10 rounded-2xl">
-                <Factory className="size-6 text-primary" />
-              </div>
-              <div>
-                <CardTitle className="text-xl font-black">Line Details</CardTitle>
-                <CardDescription>Setup identification and location visuals.</CardDescription>
-              </div>
-            </div>
+            <CardTitle className="text-xl font-black flex items-center gap-3">
+              <Factory className="size-6 text-primary" />
+              Configure {lineName}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-8 p-8">
             <div className="space-y-4">
@@ -122,7 +133,7 @@ export default function AddLinePage() {
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-slate-400">
                     {uploading ? <Loader2 className="animate-spin" /> : <Camera className="size-8" />}
-                    <p className="text-xs font-bold uppercase tracking-widest">{uploading ? 'Uploading...' : 'Upload Line Photo'}</p>
+                    <p className="text-xs font-bold uppercase tracking-widest">Update Photo</p>
                     <Button 
                       type="button" 
                       variant="outline" 
@@ -143,7 +154,7 @@ export default function AddLinePage() {
                 <Label htmlFor="line-name" className="font-black text-[10px] uppercase tracking-widest text-slate-400">Line Name</Label>
                 <Input 
                   id="line-name" 
-                  placeholder="e.g. Line 06 or Zone C" 
+                  placeholder="e.g. Line 06" 
                   className="h-12 rounded-xl border-2 font-bold"
                   value={lineName}
                   onChange={(e) => setLineName(e.target.value)}
@@ -166,7 +177,7 @@ export default function AddLinePage() {
               <Label htmlFor="desc" className="font-black text-[10px] uppercase tracking-widest text-slate-400">Description</Label>
               <Textarea 
                 id="desc" 
-                placeholder="Zone responsibilities or special equipment notes..." 
+                placeholder="Zone responsibilities..." 
                 className="rounded-xl border-2 min-h-[100px]"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -181,7 +192,7 @@ export default function AddLinePage() {
               className="bg-primary hover:bg-primary/90 h-12 min-w-[160px] font-black rounded-xl"
             >
               {isSubmitting ? <Loader2 className="mr-2 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              Save Line
+              Save Changes
             </Button>
           </CardFooter>
         </Card>

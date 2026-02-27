@@ -1,233 +1,102 @@
+
 {
   "entities": {
     "Machine": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Machine",
       "type": "object",
-      "description": "Represents a single manufacturing machine being tracked by the system.",
+      "description": "Industrial asset tracked by the system.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Machine entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "Human-readable name of the machine."
-        },
-        "serialNumber": {
-          "type": "string",
-          "description": "Manufacturer's serial number for the machine, expected to be unique."
-        },
-        "model": {
-          "type": "string",
-          "description": "Model identifier of the machine."
-        },
-        "description": {
-          "type": "string",
-          "description": "A detailed description of the machine's purpose or specifications."
-        },
-        "currentLocationId": {
-          "type": "string",
-          "description": "Reference to the Location where the machine is currently located."
-        },
-        "status": {
-          "type": "string",
-          "description": "Current operational status of the machine (e.g., 'Operational', 'Under Maintenance', 'Out of Service')."
-        },
-        "operationalHours": {
-          "type": "number",
-          "description": "Total hours the machine has been in operation."
-        },
-        "lastMaintenanceDate": {
-          "type": "string",
-          "description": "Date and time of the last recorded maintenance activity.",
-          "format": "date-time"
-        },
-        "nextInspectionDate": {
-          "type": "string",
-          "description": "Recommended date and time for the next machine inspection.",
-          "format": "date-time"
-        },
-        "purchaseDate": {
-          "type": "string",
-          "description": "Date when the machine was acquired.",
-          "format": "date-time"
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "serialNumber": { "type": "string" },
+        "type": { "type": "string" },
+        "location": { "type": "string" },
+        "status": { "type": "string" },
+        "lastMaintenanceDate": { "type": "string", "format": "date" },
+        "lastInspectionDate": { "type": "string", "format": "date" },
+        "usageHistory": { "type": "string" },
+        "imageUrl": { "type": "string" }
       },
-      "required": [
-        "id",
-        "name",
-        "serialNumber",
-        "currentLocationId",
-        "status"
-      ]
+      "required": ["id", "type", "location", "status"]
     },
-    "Location": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Location",
+    "Line": {
+      "title": "Line",
       "type": "object",
-      "description": "Represents a physical location within the manufacturing company.",
+      "description": "Physical production line or floor zone.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Location entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "A descriptive name for the location."
-        },
-        "address": {
-          "type": "string",
-          "description": "The physical address or specific area description."
-        }
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "supervisor": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" }
       },
-      "required": [
-        "id",
-        "name",
-        "address"
-      ]
+      "required": ["id", "name"]
     },
     "MachineType": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "MachineType",
       "type": "object",
-      "description": "Registry of valid machine categories.",
+      "description": "Equipment category definition.",
       "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name of the category (e.g., 'Flat Bed')."
-        }
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" }
       },
-      "required": [
-        "name"
-      ]
+      "required": ["name"]
     },
     "User": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User",
       "type": "object",
-      "description": "Represents a user within the application.",
+      "description": "System user with role-based access.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the User entity."
-        },
-        "firstName": {
-          "type": "string",
-          "description": "The first name of the user."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "The last name of the user."
-        },
-        "email": {
-          "type": "string",
-          "description": "The email address of the user.",
-          "format": "email"
-        },
-        "role": {
-          "type": "string",
-          "description": "The role or permissions level."
-        }
+        "id": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string" }
       },
-      "required": [
-        "id",
-        "firstName",
-        "lastName",
-        "email",
-        "role"
-      ]
+      "required": ["id", "email", "role"]
     },
     "MachineTransfer": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "MachineTransfer",
       "type": "object",
-      "description": "Records the historical movement of a machine.",
+      "description": "Log entry for an equipment move.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the MachineTransfer entity."
-        },
-        "machineId": {
-          "type": "string",
-          "description": "Reference to the Machine."
-        },
-        "fromLocation": {
-          "type": "string",
-          "description": "Original location."
-        },
-        "toLocation": {
-          "type": "string",
-          "description": "New destination."
-        },
-        "transferDate": {
-          "type": "string",
-          "description": "Date of transfer.",
-          "format": "date-time"
-        },
-        "requestedBy": {
-          "type": "string",
-          "description": "User who initiated the transfer."
-        }
+        "id": { "type": "string" },
+        "machineId": { "type": "string" },
+        "machineName": { "type": "string" },
+        "fromLocation": { "type": "string" },
+        "toLocation": { "type": "string" },
+        "transferDate": { "type": "string", "format": "date-time" },
+        "requestedBy": { "type": "string" },
+        "authorizedBy": { "type": "string" },
+        "status": { "type": "string" }
       },
-      "required": [
-        "id",
-        "machineId",
-        "fromLocation",
-        "toLocation",
-        "transferDate",
-        "requestedBy"
-      ]
+      "required": ["machineId", "fromLocation", "toLocation", "transferDate"]
     }
   },
   "auth": {
-    "providers": [
-      "password",
-      "anonymous"
-    ]
+    "providers": ["password", "anonymous"]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "User profiles."
-        }
-      },
-      {
-        "path": "/machineTypes/{typeId}",
-        "definition": {
-          "entityName": "MachineType",
-          "schema": {
-            "$ref": "#/backend/entities/MachineType"
-          },
-          "description": "Valid equipment categories."
-        }
-      },
-      {
-        "path": "/machines/{machineId}",
-        "definition": {
-          "entityName": "Machine",
-          "schema": {
-            "$ref": "#/backend/entities/Machine"
-          },
-          "description": "Manufacturing machines."
-        }
-      },
-      {
-        "path": "/transfers/{transferId}",
-        "definition": {
-          "entityName": "MachineTransfer",
-          "schema": {
-            "$ref": "#/backend/entities/MachineTransfer"
-          },
-          "description": "Movement logs."
-        }
-      }
-    ]
+    "/users/{userId}": {
+      "schema": "#/backend/entities/User",
+      "description": "User profiles"
+    },
+    "/machines/{machineId}": {
+      "schema": "#/backend/entities/Machine",
+      "description": "Equipment master data"
+    },
+    "/lines/{lineId}": {
+      "schema": "#/backend/entities/Line",
+      "description": "Production lines"
+    },
+    "/machineTypes/{typeId}": {
+      "schema": "#/backend/entities/MachineType",
+      "description": "Equipment categories"
+    },
+    "/transfers/{transferId}": {
+      "schema": "#/backend/entities/MachineTransfer",
+      "description": "Movement history"
+    }
   }
 }

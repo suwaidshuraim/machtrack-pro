@@ -2,7 +2,7 @@
 "use client"
 
 import { useMemo, useRef, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { useFirestore, useCollection, useMemoFirebase, useFirebase } from "@/firebase"
 import { collection, doc, updateDoc } from "firebase/firestore"
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage"
@@ -10,25 +10,19 @@ import {
   Repeat, 
   LayoutGrid, 
   Loader2,
-  AlertCircle,
   TrendingUp,
-  Factory,
   History,
-  QrCode,
   Box,
   Warehouse,
   Wrench,
   Camera,
-  Image as ImageIcon
+  Factory
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
-import { cn } from "@/lib/utils"
-import { Machine, MachineType, MachineStatus } from "@/lib/types"
+import { Machine, MachineType } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { errorEmitter } from "@/firebase/error-emitter"
-import { FirestorePermissionError } from "@/firebase/errors"
 
 export default function DashboardPage() {
   const { firestore, firebaseApp } = useFirebase()
@@ -66,7 +60,7 @@ export default function DashboardPage() {
 
     setUploadingId(activeTypeId)
     const storage = getStorage(firebaseApp)
-    const imagePath = `machineTypes/${activeTypeId}/${file.name}`
+    const imagePath = `machineTypes/${activeTypeId}/${Date.now()}_${file.name}`
     const sRef = storageRef(storage, imagePath)
 
     try {
@@ -79,7 +73,7 @@ export default function DashboardPage() {
       toast({ title: "Image Updated", description: "Machine category image has been refreshed." })
     } catch (error) {
       console.error("Upload failed", error)
-      toast({ variant: "destructive", title: "Upload Failed", description: "Check Firebase Storage permissions." })
+      toast({ variant: "destructive", title: "Upload Failed", description: "Could not update image." })
     } finally {
       setUploadingId(null)
       setActiveTypeId(null)
@@ -95,12 +89,7 @@ export default function DashboardPage() {
   if (machinesLoading || typesLoading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="size-10 animate-spin text-primary" />
-          <p className="text-sm font-bold text-slate-500 animate-pulse uppercase tracking-widest text-center">
-            Synchronizing Factory Data...
-          </p>
-        </div>
+        <Loader2 className="size-10 animate-spin text-primary" />
       </div>
     )
   }
@@ -130,7 +119,7 @@ export default function DashboardPage() {
             <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-1">
               <TrendingUp className="size-5 text-emerald-500 mb-1" />
               <span className="text-3xl font-black text-slate-900">{stats.active}</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Active (Running/Idle)</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Active Units</span>
             </CardContent>
           </Card>
           <Card className="border-none shadow-md bg-white rounded-2xl">
@@ -150,7 +139,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* SECTION 2: Transfer & Master */}
+      {/* SECTION 2: Operations */}
       <section className="space-y-4">
         <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Primary Operations</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -183,32 +172,32 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* SECTION 3: Transfer Machine & History */}
+      {/* SECTION 3: Logs & Layout */}
       <section className="space-y-4">
-        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Logs & Tracking</h2>
+        <h2 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Tracking & Assets</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Link href="/transfer/scan">
+          <Link href="/transfers">
             <Card className="border-none shadow-lg bg-accent text-white hover:bg-accent/95 transition-all active:scale-[0.98] rounded-2xl overflow-hidden group">
               <CardContent className="p-8 flex items-center justify-between">
                 <div className="space-y-1">
-                  <h3 className="text-2xl font-black tracking-tight">Transfer Machine</h3>
-                  <p className="text-accent-foreground/70 text-sm font-medium">Optical scanner & manual entry</p>
+                  <h3 className="text-2xl font-black tracking-tight">Transfer History</h3>
+                  <p className="text-accent-foreground/70 text-sm font-medium">Historical relocation logs</p>
                 </div>
                 <div className="p-4 bg-white/10 rounded-2xl group-hover:scale-110 transition-transform">
-                  <QrCode className="size-8" />
+                  <History className="size-8" />
                 </div>
               </CardContent>
             </Card>
           </Link>
-          <Link href="/transfers">
+          <Link href="/lines">
             <Card className="border-none shadow-lg bg-white text-slate-900 border border-slate-100 hover:bg-slate-50 transition-all active:scale-[0.98] rounded-2xl overflow-hidden group">
               <CardContent className="p-8 flex items-center justify-between">
                 <div className="space-y-1">
-                  <h3 className="text-2xl font-black tracking-tight">Transfer History</h3>
-                  <p className="text-slate-500 text-sm font-medium">Historical relocation logs</p>
+                  <h3 className="text-2xl font-black tracking-tight">Line Master</h3>
+                  <p className="text-slate-500 text-sm font-medium">Production floor management</p>
                 </div>
                 <div className="p-4 bg-slate-100 rounded-2xl group-hover:scale-110 transition-transform text-primary">
-                  <History className="size-8" />
+                  <Factory className="size-8" />
                 </div>
               </CardContent>
             </Card>
@@ -246,11 +235,11 @@ export default function DashboardPage() {
                     <h3 className="font-black text-white text-xl leading-tight">{type.name}</h3>
                     <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">{typeMachines.length} Units Total</p>
                   </div>
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-4 right-4">
                     <Button 
                       variant="secondary" 
                       size="sm" 
-                      className="h-8 rounded-full bg-white/90 backdrop-blur-sm font-black text-[10px] uppercase"
+                      className="h-8 rounded-full bg-white/90 backdrop-blur-sm font-black text-[10px] uppercase opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => triggerUpload(type.name)}
                       disabled={uploadingId === type.name}
                     >
@@ -259,7 +248,7 @@ export default function DashboardPage() {
                     </Button>
                   </div>
                 </div>
-                <CardContent className="p-6 flex-1 flex flex-col justify-between">
+                <CardContent className="p-6">
                   <div className="space-y-4">
                     {type.description && (
                       <p className="text-xs text-slate-500 font-medium leading-relaxed italic line-clamp-2">

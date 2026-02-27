@@ -15,14 +15,25 @@ export interface Machine {
 }
 
 export interface Line {
+  id: string;
   name: string;
   supervisor?: string;
+  description?: string;
+  imageUrl?: string;
 }
 
 export interface MachineType {
   name: string;
   description?: string;
   imageUrl?: string;
+}
+
+export interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
 }
 
 export interface Transfer {
@@ -33,6 +44,7 @@ export interface Transfer {
   toLocation: string;
   transferDate: string;
   requestedBy: string;
+  authorizedBy?: string;
   status: 'Pending' | 'Completed' | 'Cancelled';
 }
 
