@@ -19,7 +19,6 @@ import {
   Plus, 
   Trash2, 
   LayoutGrid, 
-  Save,
   Loader2
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
@@ -42,41 +41,43 @@ export default function ManageMachineTypesPage() {
   }, [firestore])
   const { data: machineTypes, loading } = useCollection<MachineType>(typesQuery)
 
-  const handleAddType = () => {
-    if (!newType.trim() || !firestore) return
+  const handleAddType = async () => {
+    if (!newType.trim() || !firestore || isSaving) return
+    
+    setIsSaving(true)
     const typeId = newType.trim()
     const typeRef = doc(firestore, "machineTypes", typeId)
     
-    setDoc(typeRef, { name: typeId })
-      .then(() => {
-        setNewType("")
-        toast({ title: "Type Added", description: `"${typeId}" added to registry.` })
+    try {
+      await setDoc(typeRef, { name: typeId })
+      setNewType("") // Clear input immediately on success
+      toast({ title: "Type Added", description: `"${typeId}" added to registry.` })
+    } catch (error) {
+      const permissionError = new FirestorePermissionError({
+        path: typeRef.path,
+        operation: 'create',
+        requestResourceData: { name: typeId },
       })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: typeRef.path,
-          operation: 'create',
-          requestResourceData: { name: typeId },
-        })
-        errorEmitter.emit('permission-error', permissionError)
-      })
+      errorEmitter.emit('permission-error', permissionError)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  const handleRemoveType = (typeId: string) => {
+  const handleRemoveType = async (typeId: string) => {
     if (!firestore) return
     const typeRef = doc(firestore, "machineTypes", typeId)
     
-    deleteDoc(typeRef)
-      .then(() => {
-        toast({ title: "Type Removed", description: "Category deleted successfully." })
+    try {
+      await deleteDoc(typeRef)
+      toast({ title: "Type Removed", description: "Category deleted successfully." })
+    } catch (error) {
+      const permissionError = new FirestorePermissionError({
+        path: typeRef.path,
+        operation: 'delete',
       })
-      .catch(async (error) => {
-        const permissionError = new FirestorePermissionError({
-          path: typeRef.path,
-          operation: 'delete',
-        })
-        errorEmitter.emit('permission-error', permissionError)
-      })
+      errorEmitter.emit('permission-error', permissionError)
+    }
   }
 
   return (
@@ -86,8 +87,8 @@ export default function ManageMachineTypesPage() {
           <ArrowLeft className="size-4" />
         </Button>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Machine Categories</h2>
-          <p className="text-muted-foreground">Add or remove the types of equipment available in your registry.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Machine Categories</h2>
+          <p className="text-muted-foreground">Add or remove equipment categories for your factory.</p>
         </div>
       </div>
 
@@ -95,55 +96,62 @@ export default function ManageMachineTypesPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <LayoutGrid className="size-5 text-blue-600" />
-            Configure Types
+            Registry Management
           </CardTitle>
-          <CardDescription>These types will appear in dropdowns across the application.</CardDescription>
+          <CardDescription>Managed categories appear in selection dropdowns.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="new-type">Add New Category</Label>
+            <Label htmlFor="new-type" className="font-bold">Add New Category</Label>
             <div className="flex gap-2">
               <Input 
                 id="new-type" 
-                placeholder="e.g. Laser Cutter" 
+                placeholder="e.g. Overlock Machine" 
                 value={newType}
                 onChange={(e) => setNewType(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddType()}
+                disabled={isSaving}
               />
-              <Button onClick={handleAddType} variant="secondary" className="font-bold">
-                <Plus className="mr-2 size-4" />
+              <Button onClick={handleAddType} disabled={isSaving || !newType.trim()} className="bg-blue-600 hover:bg-blue-700">
+                {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4 mr-2" />}
                 Add
               </Button>
             </div>
           </div>
 
           <div className="space-y-3">
-            <Label>Active Categories ({machineTypes?.length || 0})</Label>
+            <Label className="text-xs uppercase tracking-widest text-muted-foreground font-black">Active Categories ({machineTypes?.length || 0})</Label>
             {loading ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="size-6 animate-spin text-primary" />
+              <div className="flex justify-center py-12">
+                <Loader2 className="size-8 animate-spin text-blue-500" />
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-2">
                 {machineTypes?.map((type) => (
-                  <div key={type.name} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border group hover:border-blue-200 hover:bg-white transition-all">
-                    <span className="font-bold text-slate-700">{type.name}</span>
+                  <div key={type.name} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 group hover:border-blue-200 transition-all">
+                    <span className="font-bold text-slate-800">{type.name}</span>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      className="text-slate-300 hover:text-red-500 hover:bg-red-50"
                       onClick={() => handleRemoveType(type.name)}
                     >
                       <Trash2 className="size-4" />
                     </Button>
                   </div>
                 ))}
+                {(!machineTypes || machineTypes.length === 0) && (
+                  <div className="text-center py-8 text-sm text-muted-foreground italic border-2 border-dashed rounded-xl">
+                    No categories defined yet.
+                  </div>
+                )}
               </div>
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex gap-3 justify-end border-t p-6">
-          <Button variant="outline" onClick={() => router.back()}>Back to Registry</Button>
+        <CardFooter className="border-t bg-slate-50/50 p-6 flex justify-between items-center">
+          <p className="text-xs text-muted-foreground font-medium">Removing a category does not delete machines of that type.</p>
+          <Button variant="outline" onClick={() => router.back()}>Close</Button>
         </CardFooter>
       </Card>
     </div>

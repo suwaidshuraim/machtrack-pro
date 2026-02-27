@@ -1,6 +1,7 @@
 
 "use client"
 
+import { useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { collection } from "firebase/firestore"
@@ -28,23 +29,23 @@ export default function DashboardPage() {
 
   const { data: machines, loading: machinesLoading } = useCollection<Machine>(machinesQuery)
 
-  if (machinesLoading && !machines) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="size-8 animate-spin text-primary" />
-      </div>
-    )
-  }
+  // Memoized derived stats for performance
+  const stats = useMemo(() => {
+    const safeMachines = machines || []
+    const running = safeMachines.filter(m => m.status === 'Running' || m.status === 'Idle').length
+    const bank = safeMachines.filter(m => m.status === 'Bank').length
+    const repair = safeMachines.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
+    const activeTypes = Array.from(new Set(safeMachines.map(m => m.type)))
+    
+    return {
+      running,
+      bank,
+      repair,
+      total: running + bank + repair,
+      activeTypes
+    }
+  }, [machines])
 
-  const safeMachines = machines || []
-  const runningCount = safeMachines.filter(m => m.status === 'Running' || m.status === 'Idle').length
-  const bankCount = safeMachines.filter(m => m.status === 'Bank').length
-  const repairCount = safeMachines.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
-  const totalCount = runningCount + bankCount + repairCount
-
-  // derive active types from machine master
-  const activeTypeNames = Array.from(new Set(safeMachines.map(m => m.type)))
-  
   const MACHINE_TYPE_METADATA: Record<string, { icon: string, color: string }> = {
     "Flat Bed": { icon: 'https://picsum.photos/seed/flatbed/400/300', color: 'bg-green-500' },
     "Cylinder": { icon: 'https://picsum.photos/seed/cylinder/400/300', color: 'bg-blue-500' },
@@ -57,142 +58,163 @@ export default function DashboardPage() {
   }
 
   const getTypeStats = (typeName: string) => {
-    const filtered = safeMachines.filter(m => m.type === typeName)
+    const filtered = (machines || []).filter(m => m.type === typeName)
     return {
       total: filtered.length,
       running: filtered.filter(m => m.status === 'Running' || m.status === 'Idle').length
     }
   }
 
+  if (machinesLoading && !machines) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="size-10 animate-spin text-blue-500" />
+          <p className="text-sm font-bold text-slate-500 animate-pulse uppercase tracking-widest">Gathering Fleet Intel...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <Card className="border-none shadow-md bg-white/80 backdrop-blur">
-        <CardContent className="p-4 flex flex-col md:flex-row items-center justify-around gap-4 md:gap-0">
-          <div className="text-center">
-            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Total Machines</p>
-            <p className="text-3xl font-black">{totalCount}</p>
+    <div className="max-w-4xl mx-auto space-y-8 pb-12">
+      <Card className="border-none shadow-xl bg-white/80 backdrop-blur-md rounded-3xl overflow-hidden">
+        <CardContent className="p-8 flex flex-col md:flex-row items-center justify-around gap-6 md:gap-0">
+          <div className="text-center group">
+            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-1">Total Assets</p>
+            <p className="text-4xl font-black text-slate-900 group-hover:scale-110 transition-transform">{stats.total}</p>
           </div>
-          <div className="hidden md:block h-10 w-px bg-border mx-4" />
-          <div className="text-center">
-            <p className="text-[10px] text-green-600 font-bold uppercase tracking-widest">Active (Running/Idle)</p>
-            <p className="text-3xl font-black text-green-600">{runningCount}</p>
+          <div className="hidden md:block h-12 w-px bg-slate-100" />
+          <div className="text-center group">
+            <p className="text-[10px] text-green-600 font-black uppercase tracking-[0.2em] mb-1">Active</p>
+            <p className="text-4xl font-black text-green-600 group-hover:scale-110 transition-transform">{stats.running}</p>
           </div>
-          <div className="hidden md:block h-10 w-px bg-border mx-4" />
-          <div className="text-center">
-            <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest">Machine Bank</p>
-            <p className="text-3xl font-black text-blue-600">{bankCount}</p>
+          <div className="hidden md:block h-12 w-px bg-slate-100" />
+          <div className="text-center group">
+            <p className="text-[10px] text-blue-600 font-black uppercase tracking-[0.2em] mb-1">In Bank</p>
+            <p className="text-4xl font-black text-blue-600 group-hover:scale-110 transition-transform">{stats.bank}</p>
           </div>
-          <div className="hidden md:block h-10 w-px bg-border mx-4" />
-          <div className="text-center">
-            <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest">Repair / Breakdown</p>
-            <p className="text-3xl font-black text-red-500">{repairCount}</p>
+          <div className="hidden md:block h-12 w-px bg-slate-100" />
+          <div className="text-center group">
+            <p className="text-[10px] text-red-500 font-black uppercase tracking-[0.2em] mb-1">In Repair</p>
+            <p className="text-4xl font-black text-red-500 group-hover:scale-110 transition-transform">{stats.repair}</p>
           </div>
         </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link href="/transfer/scan">
-          <div className="flex items-center gap-4 p-5 rounded-2xl bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 transition-all hover:-translate-y-1">
-            <div className="p-2 bg-white/20 rounded-xl">
+          <div className="flex items-center gap-5 p-6 rounded-3xl bg-slate-900 text-white shadow-xl hover:bg-slate-800 transition-all hover:-translate-y-1 active:scale-95 group">
+            <div className="p-3 bg-white/10 rounded-2xl group-hover:bg-blue-500 transition-colors">
               <Repeat className="size-8" />
             </div>
             <div>
-              <p className="font-black text-xl">Machine Transfer</p>
-              <p className="text-emerald-100 text-xs font-medium">Relocate units instantly</p>
+              <p className="font-black text-xl">Asset Transfer</p>
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Instant Relocation</p>
             </div>
           </div>
         </Link>
 
         <Link href="/machines">
-          <div className="flex items-center gap-4 p-5 rounded-2xl bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-all hover:-translate-y-1">
-            <div className="p-2 bg-white/20 rounded-xl">
+          <div className="flex items-center gap-5 p-6 rounded-3xl bg-blue-600 text-white shadow-xl hover:bg-blue-700 transition-all hover:-translate-y-1 active:scale-95 group">
+            <div className="p-3 bg-white/20 rounded-2xl group-hover:bg-white/40 transition-colors">
               <LayoutGrid className="size-8" />
             </div>
             <div>
-              <p className="font-black text-xl">Machine Master</p>
-              <p className="text-blue-100 text-xs font-medium">Full asset registry & control</p>
+              <p className="font-black text-xl">Asset Master</p>
+              <p className="text-blue-100 text-xs font-bold uppercase tracking-wider">Full Inventory Control</p>
             </div>
           </div>
         </Link>
 
         <Link href="/lines">
-          <div className="flex items-center gap-4 p-5 rounded-2xl bg-slate-800 text-white shadow-lg hover:bg-slate-900 transition-all hover:-translate-y-1">
-            <div className="p-2 bg-white/20 rounded-xl">
+          <div className="flex items-center gap-5 p-6 rounded-3xl bg-white border-2 border-slate-100 text-slate-900 shadow-lg hover:border-slate-300 transition-all hover:-translate-y-1 active:scale-95 group">
+            <div className="p-3 bg-slate-100 rounded-2xl group-hover:bg-slate-200 transition-colors">
               <Factory className="size-8" />
             </div>
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <p className="font-black text-xl">Line Master</p>
-                <span className="bg-red-500 text-[10px] px-2 py-0.5 rounded font-black uppercase">Live</span>
+                <span className="bg-red-500 text-[10px] px-2 py-0.5 rounded-lg text-white font-black uppercase tracking-tighter">Live</span>
               </div>
-              <p className="text-slate-300 text-xs font-medium">Real-time floor allocation</p>
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Floor Allocation</p>
             </div>
           </div>
         </Link>
 
         <Link href="/transfers">
-          <div className="flex items-center gap-4 p-5 rounded-2xl bg-amber-500 text-white shadow-lg hover:bg-amber-600 transition-all hover:-translate-y-1">
-            <div className="p-2 bg-white/20 rounded-xl">
+          <div className="flex items-center gap-5 p-6 rounded-3xl bg-white border-2 border-slate-100 text-slate-900 shadow-lg hover:border-slate-300 transition-all hover:-translate-y-1 active:scale-95 group">
+            <div className="p-3 bg-slate-100 rounded-2xl group-hover:bg-slate-200 transition-colors">
               <History className="size-8" />
             </div>
             <div>
-              <p className="font-black text-xl">Transfer History</p>
-              <p className="text-amber-100 text-xs font-medium">Historical movement logs</p>
+              <p className="font-black text-xl">Log History</p>
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Audit Trails</p>
             </div>
           </div>
         </Link>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6 pt-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Types of Machines</h2>
-          <span className="text-xs font-bold text-muted-foreground uppercase">{activeTypeNames.length} Active Categories</span>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Active Categories</h2>
+          <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{stats.activeTypes.length} Types Identified</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {activeTypeNames.map((typeName) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {stats.activeTypes.map((typeName) => {
             const meta = MACHINE_TYPE_METADATA[typeName] || MACHINE_TYPE_METADATA["Others"]
             const stats = getTypeStats(typeName)
             return (
-              <Card key={typeName} className="overflow-hidden border-none shadow-sm hover:shadow-md transition-all group">
-                <CardContent className="p-0 flex items-center bg-white">
-                  <div className="p-5 flex-1">
-                    <h3 className="font-black text-xl mb-3 text-slate-800">{typeName}</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className={cn("size-2.5 rounded-full", meta.color)} />
-                        <span className="text-sm font-bold text-slate-600">{stats.running} Active nos</span>
+              <Card key={typeName} className="overflow-hidden border-none shadow-lg hover:shadow-2xl transition-all group rounded-3xl">
+                <CardContent className="p-0 flex items-center bg-white h-full">
+                  <div className="p-6 flex-1">
+                    <h3 className="font-black text-2xl mb-4 text-slate-800 leading-tight">{typeName}</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className={cn("size-3 rounded-full animate-pulse", meta.color)} />
+                        <span className="text-sm font-black text-slate-600 uppercase tracking-wider">{stats.running} Running</span>
                       </div>
-                      <div className="text-sm text-muted-foreground font-medium">
-                        Total Inventory: <span className="font-bold text-slate-900">{stats.total}</span>
+                      <div className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+                        Total Stock: <span className="font-black text-slate-900 ml-1">{stats.total}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="relative w-44 h-36 border-l overflow-hidden">
+                  <div className="relative w-40 h-44 border-l border-slate-50 overflow-hidden shrink-0">
                     <Image 
                       src={meta.icon} 
                       alt={typeName} 
                       fill 
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="object-cover transition-transform duration-700 group-hover:scale-125"
                       data-ai-hint="industrial machine"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent" />
                   </div>
                 </CardContent>
               </Card>
             )
           })}
+          {stats.activeTypes.length === 0 && (
+            <div className="col-span-2 py-16 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+              <p className="text-slate-500 font-black">No machines registered yet.</p>
+              <p className="text-slate-400 text-sm mt-1">Add your first asset to see analytics here.</p>
+            </div>
+          )}
         </div>
       </div>
 
       <Link href="/maintenance">
-        <div className="flex items-center justify-between p-5 bg-slate-100 rounded-2xl border border-slate-200 hover:bg-slate-200 transition-colors">
+        <div className="flex items-center justify-between p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:bg-slate-100 transition-all group">
           <div className="flex items-center gap-4">
-            <div className="p-2 bg-white rounded-lg shadow-sm">
-              <Wrench className="size-5 text-slate-500" />
+            <div className="p-3 bg-white rounded-2xl shadow-sm group-hover:scale-110 transition-transform">
+              <Wrench className="size-6 text-slate-500" />
             </div>
-            <span className="font-bold text-slate-700">Maintenance & Repair Hub</span>
+            <div>
+              <span className="font-black text-slate-800 text-lg">Maintenance Command Hub</span>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Schedules & Repairs</p>
+            </div>
           </div>
-          <ChevronRight className="size-5 text-slate-400" />
+          <ChevronRight className="size-6 text-slate-300 group-hover:text-slate-900 transition-colors" />
         </div>
       </Link>
     </div>

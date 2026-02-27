@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Save, Loader2, Sparkles } from "lucide-react"
+import { ArrowLeft, Save, Loader2, Sparkles, Building2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { doc, setDoc, collection } from "firebase/firestore"
@@ -34,13 +34,13 @@ export default function AddMachinePage() {
     if (!firestore) return null
     return collection(firestore, "machineTypes")
   }, [firestore])
-  const { data: machineTypes } = useCollection<MachineType>(typesQuery)
+  const { data: machineTypes, loading: typesLoading } = useCollection<MachineType>(typesQuery)
 
   const linesQuery = useMemoFirebase(() => {
     if (!firestore) return null
     return collection(firestore, "lines")
   }, [firestore])
-  const { data: lines } = useCollection<{ name: string }>(linesQuery)
+  const { data: lines, loading: linesLoading } = useCollection<{ name: string }>(linesQuery)
 
   useEffect(() => {
     if (selectedType) {
@@ -56,7 +56,6 @@ export default function AddMachinePage() {
     }
   }, [selectedType])
 
-  // Constraint: If location is Machine Bank, status must be Available (Bank) or Repair
   useEffect(() => {
     if (location === "Machine Bank") {
       if (status !== "Bank" && status !== "Repair") {
@@ -86,7 +85,7 @@ export default function AddMachinePage() {
 
     try {
       await setDoc(machineRef, machineData)
-      toast({ title: "Success", description: `Asset ${assetId} registered successfully.` })
+      toast({ title: "Asset Registered", description: `Asset ${assetId} has been added to the registry.` })
       router.push('/machines')
     } catch (error) {
       const permissionError = new FirestorePermissionError({
@@ -106,98 +105,122 @@ export default function AddMachinePage() {
           <ArrowLeft className="size-4" />
         </Button>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Register New Machine</h2>
-          <p className="text-muted-foreground">Add a new industrial asset to the Machine Master registry.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Register New Machine</h2>
+          <p className="text-muted-foreground">Add a new industrial asset to your factory registry.</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <Card className="border-none shadow-lg">
-          <CardHeader>
-            <CardTitle>Asset Information</CardTitle>
-            <CardDescription>Select a type to automatically generate the Asset ID and Serial.</CardDescription>
+        <Card className="border-none shadow-lg overflow-hidden">
+          <CardHeader className="bg-slate-50/50 border-b">
+            <CardTitle className="text-xl">Asset Specification</CardTitle>
+            <CardDescription>Select a category to auto-generate unique identification codes.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-6">
             <div className="space-y-2">
-              <Label htmlFor="type" className="text-sm font-bold">Machine Type</Label>
+              <Label htmlFor="type" className="font-bold text-slate-700">Machine Category</Label>
               <Select onValueChange={setSelectedType} required>
-                <SelectTrigger id="type" className="h-12 text-base font-semibold">
-                  <SelectValue placeholder="Pick a machine category" />
+                <SelectTrigger id="type" className="h-12 text-base font-semibold border-2 hover:border-blue-400 focus:ring-blue-100 transition-all">
+                  <SelectValue placeholder={typesLoading ? "Loading categories..." : "Pick a category"} />
                 </SelectTrigger>
                 <SelectContent>
                   {machineTypes?.map(type => (
-                    <SelectItem key={type.name} value={type.name} className="font-medium">{type.name}</SelectItem>
+                    <SelectItem key={type.name} value={type.name} className="font-medium py-3">{type.name}</SelectItem>
                   ))}
+                  {(!machineTypes || machineTypes.length === 0) && !typesLoading && (
+                    <SelectItem value="_empty" disabled>No categories found. Configure them in Machine Master.</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="asset-id" className="text-muted-foreground">Asset ID (Auto-Format)</Label>
+                <Label htmlFor="asset-id" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Generated Asset ID</Label>
                 <div className="relative">
-                  <Input id="asset-id" value={assetId} readOnly className="bg-slate-50 font-mono text-blue-600 font-bold border-dashed" />
-                  {selectedType && <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 size-3 text-blue-400" />}
+                  <Input id="asset-id" value={assetId} readOnly className="bg-slate-50 font-mono text-blue-600 font-bold border-dashed h-11" />
+                  {selectedType && <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 size-3 text-blue-400 animate-pulse" />}
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="serial" className="text-muted-foreground">Serial Number (Auto)</Label>
+                <Label htmlFor="serial" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Serial Number</Label>
                 <div className="relative">
-                  <Input id="serial" value={serial} readOnly className="bg-slate-50 font-mono" />
-                  {selectedType && <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 size-3 text-slate-400" />}
+                  <Input id="serial" value={serial} readOnly className="bg-slate-50 font-mono h-11" />
+                  {selectedType && <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 size-3 text-slate-300" />}
                 </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="location">Initial Location</Label>
-              <Select onValueChange={setLocation} value={location} required>
-                <SelectTrigger id="location" className="h-11">
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Machine Bank">Machine Bank</SelectItem>
-                  {lines?.map(l => (
-                    <SelectItem key={l.name} value={l.name}>{l.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="location" className="font-bold text-slate-700">Initial Location</Label>
+                <Select onValueChange={setLocation} value={location} required>
+                  <SelectTrigger id="location" className="h-11 border-slate-200">
+                    <SelectValue placeholder={linesLoading ? "Loading lines..." : "Select location"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Machine Bank" className="font-bold">Machine Bank (Default)</SelectItem>
+                    {lines?.map(l => (
+                      <SelectItem key={l.name} value={l.name}>{l.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status" className="font-bold text-slate-700">Initial Status</Label>
+                <Select onValueChange={(v) => setStatus(v as MachineStatus)} value={status}>
+                  <SelectTrigger id="status" className="h-11 border-slate-200">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {location === "Machine Bank" ? (
+                      <>
+                        <SelectItem value="Bank" className="text-blue-600 font-bold">Available (Bank)</SelectItem>
+                        <SelectItem value="Repair" className="text-orange-600 font-bold">In Repair</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="Running" className="text-green-600 font-bold">Running</SelectItem>
+                        <SelectItem value="Idle" className="text-yellow-600 font-bold">Idle</SelectItem>
+                        <SelectItem value="Breakdown" className="text-red-600 font-bold">Breakdown</SelectItem>
+                        <SelectItem value="Repair" className="text-orange-600 font-bold">In Repair</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">Initial Status</Label>
-              <Select onValueChange={(v) => setStatus(v as MachineStatus)} value={status}>
-                <SelectTrigger id="status" className="h-11">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {location === "Machine Bank" ? (
-                    <>
-                      <SelectItem value="Bank">Available</SelectItem>
-                      <SelectItem value="Repair">Repair</SelectItem>
-                    </>
-                  ) : (
-                    <>
-                      <SelectItem value="Running">Running</SelectItem>
-                      <SelectItem value="Idle">Idle</SelectItem>
-                      <SelectItem value="Breakdown">Breakdown</SelectItem>
-                      <SelectItem value="Repair">Repair</SelectItem>
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="history">Usage/History Notes</Label>
-              <Textarea id="history" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Describe the machine's intended use or background..." className="min-h-[100px]" />
+              <Label htmlFor="history" className="font-bold text-slate-700">Notes / Documentation</Label>
+              <Textarea 
+                id="history" 
+                value={notes} 
+                onChange={(e) => setNotes(e.target.value)} 
+                placeholder="Initial condition, vendor details, or special instructions..." 
+                className="min-h-[120px] resize-none" 
+              />
             </div>
           </CardContent>
-          <CardFooter className="flex gap-3 justify-end border-t p-6">
-            <Button type="button" variant="outline" onClick={() => router.back()} className="h-11 px-6">Cancel</Button>
-            <Button type="submit" disabled={isSubmitting || !selectedType} className="bg-blue-600 hover:bg-blue-700 h-11 min-w-[160px] font-bold">
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              Save Asset
+          <CardFooter className="flex gap-3 justify-end border-t bg-slate-50/50 p-6">
+            <Button type="button" variant="outline" onClick={() => router.back()} className="h-11 px-8 font-bold">Cancel</Button>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting || !selectedType} 
+              className="bg-blue-600 hover:bg-blue-700 h-11 min-w-[180px] font-black shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Registering...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Complete Registration
+                </>
+              )}
             </Button>
           </CardFooter>
         </Card>
