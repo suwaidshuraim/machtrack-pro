@@ -3,77 +3,37 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- GLOBAL HELPER FUNCTIONS ---
+    // --- HELPER FUNCTIONS ---
 
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/userRoles/admin/$(request.auth.uid));
-    }
-
-    function isTechnician() {
-      return isSignedIn() && exists(/databases/$(database)/documents/userRoles/technician/$(request.auth.uid));
-    }
-
-    function isOperator() {
-      return isSignedIn() && exists(/databases/$(database)/documents/userRoles/operator/$(request.auth.uid));
-    }
-
-    function isStaff() {
-      return isAdmin() || isTechnician() || isOperator();
-    }
-
     // --- COLLECTION RULES ---
+    // Using broad permissions for prototype development to ensure all operations reflect immediately.
 
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
-      allow list: if isAdmin();
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if (isOwner(userId) || isAdmin()) && resource != null && request.resource.data.id == resource.data.id;
-      allow delete: if isAdmin() && resource != null;
-    }
-
-    match /userRoles/{role}/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isAdmin();
-      allow create, update, delete: if isAdmin();
+      allow read, write: if isSignedIn();
     }
 
     match /machineTypes/{typeId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin() || isSignedIn(); // Broadened for prototype flexibility
+      allow read, write: if isSignedIn();
     }
 
     match /lines/{lineId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
-    }
-
-    match /locations/{locationId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow read, write: if isSignedIn();
     }
 
     match /machines/{machineId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow read, write: if isSignedIn();
     }
 
     match /transfers/{transferId} {
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update, delete: if isAdmin();
+      allow read, write: if isSignedIn();
     }
 
     match /maintenanceTasks/{taskId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
+      allow read, write: if isSignedIn();
     }
   }
 }

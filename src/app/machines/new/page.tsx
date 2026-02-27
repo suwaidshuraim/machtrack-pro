@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
@@ -16,6 +15,7 @@ import { doc, setDoc, collection } from "firebase/firestore"
 import { errorEmitter } from "@/firebase/error-emitter"
 import { FirestorePermissionError } from "@/firebase/errors"
 import { MachineType, MachineStatus, Line } from "@/lib/types"
+import { cn } from "@/lib/utils"
 
 export default function AddMachinePage() {
   const router = useRouter()
@@ -24,7 +24,7 @@ export default function AddMachinePage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   
   const [selectedType, setSelectedType] = useState<string>("")
-  const [assetId, setAssetId] = useState("Select Category...")
+  const [assetId, setAssetId] = useState("...")
   const [serial, setSerial] = useState("")
   const [location, setLocation] = useState("Machine Bank")
   const [status, setStatus] = useState<MachineStatus>("Bank")
@@ -48,13 +48,9 @@ export default function AddMachinePage() {
       const nextNum = 100 + Math.floor(Math.random() * 900)
       setAssetId(`${prefix}-${nextNum}`)
       setSerial(`SN-${prefix}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`)
-    } else {
-      setAssetId("Select Category...")
-      setSerial("")
     }
   }, [selectedType])
 
-  // Status Logic Handler
   const statusOptions = useMemo(() => {
     if (location === "Machine Bank") {
       return [
@@ -71,7 +67,6 @@ export default function AddMachinePage() {
     ]
   }, [location])
 
-  // Sync status if location changes and current status is invalid
   useEffect(() => {
     const validValues = statusOptions.map(o => o.value)
     if (!validValues.includes(status)) {
@@ -116,7 +111,7 @@ export default function AddMachinePage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full shadow-sm">
+        <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full">
           <ArrowLeft className="size-4" />
         </Button>
         <div>
@@ -126,17 +121,17 @@ export default function AddMachinePage() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <Card className="border-none shadow-2xl overflow-hidden rounded-3xl">
+        <Card className="border-none shadow-2xl rounded-3xl overflow-hidden">
           <CardHeader className="bg-slate-50/50 border-b py-8">
             <CardTitle className="text-xl font-black">Technical Specifications</CardTitle>
-            <CardDescription className="font-bold">Define identifying characteristics and initial placement.</CardDescription>
+            <CardDescription>Define identifying characteristics and initial placement.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-8 pt-8 px-8">
             <div className="space-y-3">
-              <Label htmlFor="type" className="font-black text-[10px] uppercase tracking-widest text-blue-600">Equipment Category</Label>
+              <Label className="font-black text-[10px] uppercase tracking-widest text-blue-600">Equipment Category</Label>
               <Select onValueChange={setSelectedType} required>
-                <SelectTrigger id="type" className="h-14 border-2 rounded-2xl font-bold text-lg">
-                  <SelectValue placeholder={typesLoading ? "Synchronizing registry..." : "Pick a category"} />
+                <SelectTrigger className="h-14 border-2 rounded-2xl font-bold text-lg">
+                  <SelectValue placeholder={typesLoading ? "Syncing..." : "Pick a category"} />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl">
                   {machineTypes?.map(type => (
@@ -148,20 +143,20 @@ export default function AddMachinePage() {
 
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">System Asset ID</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Asset ID</Label>
                 <Input value={assetId} readOnly className="h-14 bg-slate-50 border-none font-mono text-blue-600 font-black text-lg rounded-2xl" />
               </div>
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Manufacturer Serial</Label>
+                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Serial Number</Label>
                 <Input value={serial} readOnly className="h-14 bg-slate-50 border-none font-mono font-bold text-lg rounded-2xl" />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-3">
-                <Label htmlFor="location" className="font-black text-[10px] uppercase tracking-widest text-blue-600">Primary Location</Label>
+                <Label className="font-black text-[10px] uppercase tracking-widest text-blue-600">Placement</Label>
                 <Select onValueChange={setLocation} value={location} required>
-                  <SelectTrigger id="location" className="h-14 border-2 rounded-2xl font-bold">
+                  <SelectTrigger className="h-14 border-2 rounded-2xl font-bold">
                     <SelectValue placeholder="Select location" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
@@ -174,9 +169,9 @@ export default function AddMachinePage() {
               </div>
 
               <div className="space-y-3">
-                <Label htmlFor="status" className="font-black text-[10px] uppercase tracking-widest text-blue-600">Initial Condition</Label>
+                <Label className="font-black text-[10px] uppercase tracking-widest text-blue-600">Initial Status</Label>
                 <Select onValueChange={(v) => setStatus(v as MachineStatus)} value={status}>
-                  <SelectTrigger id="status" className="h-14 border-2 rounded-2xl font-bold">
+                  <SelectTrigger className="h-14 border-2 rounded-2xl font-bold">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl">
@@ -191,25 +186,24 @@ export default function AddMachinePage() {
             </div>
 
             <div className="space-y-3">
-              <Label htmlFor="history" className="font-black text-[10px] uppercase tracking-widest text-blue-600">Asset Notes</Label>
+              <Label className="font-black text-[10px] uppercase tracking-widest text-blue-600">Notes</Label>
               <Textarea 
-                id="history" 
-                placeholder="Initial condition, required tools, or specific attachments..."
+                placeholder="Condition notes, required attachments..."
                 value={notes} 
                 onChange={(e) => setNotes(e.target.value)} 
-                className="min-h-[120px] resize-none rounded-2xl border-2 p-4 font-medium" 
+                className="min-h-[120px] rounded-2xl border-2" 
               />
             </div>
           </CardContent>
           <CardFooter className="flex gap-4 justify-end border-t bg-slate-50/50 p-8">
-            <Button type="button" variant="outline" onClick={() => router.back()} className="h-14 px-8 rounded-2xl font-bold">Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => router.back()} className="h-14 px-8 rounded-2xl">Cancel</Button>
             <Button 
               type="submit" 
               disabled={isSubmitting || !selectedType} 
-              className="bg-blue-600 hover:bg-blue-700 h-14 min-w-[200px] font-black text-lg rounded-2xl shadow-xl shadow-blue-100"
+              className="bg-blue-600 hover:bg-blue-700 h-14 min-w-[200px] font-black text-lg rounded-2xl"
             >
-              {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
-              Register Asset
+              {isSubmitting ? <Loader2 className="mr-2 animate-spin" /> : <Save className="mr-2" />}
+              Save Asset
             </Button>
           </CardFooter>
         </Card>
