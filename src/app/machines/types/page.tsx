@@ -39,7 +39,7 @@ export default function ManageMachineTypesPage() {
     if (!firestore) return null
     return collection(firestore, "machineTypes")
   }, [firestore])
-  const { data: machineTypes, loading } = useCollection<MachineType>(typesQuery)
+  const { data: machineTypes, isLoading: loading } = useCollection<MachineType>(typesQuery)
 
   const handleAddType = async () => {
     if (!newType.trim() || !firestore || isSaving) return
@@ -50,7 +50,7 @@ export default function ManageMachineTypesPage() {
     
     try {
       await setDoc(typeRef, { name: typeId })
-      setNewType("") // Clear input immediately on success
+      setNewType("") // Clear input immediately
       toast({ title: "Type Added", description: `"${typeId}" added to registry.` })
     } catch (error) {
       const permissionError = new FirestorePermissionError({
@@ -70,7 +70,7 @@ export default function ManageMachineTypesPage() {
     
     try {
       await deleteDoc(typeRef)
-      toast({ title: "Type Removed", description: "Category deleted successfully." })
+      toast({ title: "Type Removed", description: "Category deleted." })
     } catch (error) {
       const permissionError = new FirestorePermissionError({
         path: typeRef.path,
@@ -88,7 +88,6 @@ export default function ManageMachineTypesPage() {
         </Button>
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">Machine Categories</h2>
-          <p className="text-muted-foreground">Add or remove equipment categories for your factory.</p>
         </div>
       </div>
 
@@ -98,11 +97,10 @@ export default function ManageMachineTypesPage() {
             <LayoutGrid className="size-5 text-blue-600" />
             Registry Management
           </CardTitle>
-          <CardDescription>Managed categories appear in selection dropdowns.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="new-type" className="font-bold">Add New Category</Label>
+            <Label htmlFor="new-type" className="font-bold">New Category</Label>
             <div className="flex gap-2">
               <Input 
                 id="new-type" 
@@ -112,7 +110,7 @@ export default function ManageMachineTypesPage() {
                 onKeyDown={(e) => e.key === 'Enter' && handleAddType()}
                 disabled={isSaving}
               />
-              <Button onClick={handleAddType} disabled={isSaving || !newType.trim()} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={handleAddType} disabled={isSaving || !newType.trim()} className="bg-blue-600">
                 {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4 mr-2" />}
                 Add
               </Button>
@@ -120,7 +118,7 @@ export default function ManageMachineTypesPage() {
           </div>
 
           <div className="space-y-3">
-            <Label className="text-xs uppercase tracking-widest text-muted-foreground font-black">Active Categories ({machineTypes?.length || 0})</Label>
+            <Label className="text-xs uppercase tracking-widest text-muted-foreground font-black">Active Categories</Label>
             {loading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="size-8 animate-spin text-blue-500" />
@@ -128,29 +126,23 @@ export default function ManageMachineTypesPage() {
             ) : (
               <div className="grid grid-cols-1 gap-2">
                 {machineTypes?.map((type) => (
-                  <div key={type.name} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 group hover:border-blue-200 transition-all">
+                  <div key={type.name} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border group">
                     <span className="font-bold text-slate-800">{type.name}</span>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="text-slate-300 hover:text-red-500 hover:bg-red-50"
+                      className="text-slate-300 hover:text-red-500"
                       onClick={() => handleRemoveType(type.name)}
                     >
                       <Trash2 className="size-4" />
                     </Button>
                   </div>
                 ))}
-                {(!machineTypes || machineTypes.length === 0) && (
-                  <div className="text-center py-8 text-sm text-muted-foreground italic border-2 border-dashed rounded-xl">
-                    No categories defined yet.
-                  </div>
-                )}
               </div>
             )}
           </div>
         </CardContent>
-        <CardFooter className="border-t bg-slate-50/50 p-6 flex justify-between items-center">
-          <p className="text-xs text-muted-foreground font-medium">Removing a category does not delete machines of that type.</p>
+        <CardFooter className="border-t bg-slate-50/50 p-6 flex justify-end">
           <Button variant="outline" onClick={() => router.back()}>Close</Button>
         </CardFooter>
       </Card>

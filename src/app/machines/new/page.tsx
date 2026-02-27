@@ -34,13 +34,13 @@ export default function AddMachinePage() {
     if (!firestore) return null
     return collection(firestore, "machineTypes")
   }, [firestore])
-  const { data: machineTypes, loading: typesLoading } = useCollection<MachineType>(typesQuery)
+  const { data: machineTypes, isLoading: typesLoading } = useCollection<MachineType>(typesQuery)
 
   const linesQuery = useMemoFirebase(() => {
     if (!firestore) return null
     return collection(firestore, "lines")
   }, [firestore])
-  const { data: lines, loading: linesLoading } = useCollection<{ name: string }>(linesQuery)
+  const { data: lines, isLoading: linesLoading } = useCollection<{ name: string }>(linesQuery)
 
   useEffect(() => {
     if (selectedType) {
@@ -56,9 +56,10 @@ export default function AddMachinePage() {
     }
   }, [selectedType])
 
+  // Sync status constraints when location changes
   useEffect(() => {
     if (location === "Machine Bank") {
-      if (status !== "Bank" && status !== "Repair") {
+      if (status !== "Bank" && status !== "Repair" && status !== "Breakdown") {
         setStatus("Bank")
       }
     }
@@ -105,61 +106,51 @@ export default function AddMachinePage() {
           <ArrowLeft className="size-4" />
         </Button>
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Register New Machine</h2>
-          <p className="text-muted-foreground">Add a new industrial asset to your factory registry.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Register Machine</h2>
+          <p className="text-muted-foreground">Add a new asset to your factory registry.</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit}>
         <Card className="border-none shadow-lg overflow-hidden">
           <CardHeader className="bg-slate-50/50 border-b">
-            <CardTitle className="text-xl">Asset Specification</CardTitle>
-            <CardDescription>Select a category to auto-generate unique identification codes.</CardDescription>
+            <CardTitle>Specifications</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6 pt-6">
             <div className="space-y-2">
-              <Label htmlFor="type" className="font-bold text-slate-700">Machine Category</Label>
+              <Label htmlFor="type" className="font-bold">Machine Category</Label>
               <Select onValueChange={setSelectedType} required>
-                <SelectTrigger id="type" className="h-12 text-base font-semibold border-2 hover:border-blue-400 focus:ring-blue-100 transition-all">
-                  <SelectValue placeholder={typesLoading ? "Loading categories..." : "Pick a category"} />
+                <SelectTrigger id="type" className="h-12 border-2">
+                  <SelectValue placeholder={typesLoading ? "Loading..." : "Pick a category"} />
                 </SelectTrigger>
                 <SelectContent>
                   {machineTypes?.map(type => (
-                    <SelectItem key={type.name} value={type.name} className="font-medium py-3">{type.name}</SelectItem>
+                    <SelectItem key={type.name} value={type.name}>{type.name}</SelectItem>
                   ))}
-                  {(!machineTypes || machineTypes.length === 0) && !typesLoading && (
-                    <SelectItem value="_empty" disabled>No categories found. Configure them in Machine Master.</SelectItem>
-                  )}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="asset-id" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Generated Asset ID</Label>
-                <div className="relative">
-                  <Input id="asset-id" value={assetId} readOnly className="bg-slate-50 font-mono text-blue-600 font-bold border-dashed h-11" />
-                  {selectedType && <Sparkles className="absolute right-3 top-1/2 -translate-y-1/2 size-3 text-blue-400 animate-pulse" />}
-                </div>
+                <Label className="text-[10px] font-black uppercase text-slate-400">Asset ID</Label>
+                <Input value={assetId} readOnly className="bg-slate-50 font-mono text-blue-600 font-bold" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="serial" className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Serial Number</Label>
-                <div className="relative">
-                  <Input id="serial" value={serial} readOnly className="bg-slate-50 font-mono h-11" />
-                  {selectedType && <Building2 className="absolute right-3 top-1/2 -translate-y-1/2 size-3 text-slate-300" />}
-                </div>
+                <Label className="text-[10px] font-black uppercase text-slate-400">Serial No</Label>
+                <Input value={serial} readOnly className="bg-slate-50 font-mono" />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="location" className="font-bold text-slate-700">Initial Location</Label>
+                <Label htmlFor="location" className="font-bold">Location</Label>
                 <Select onValueChange={setLocation} value={location} required>
-                  <SelectTrigger id="location" className="h-11 border-slate-200">
-                    <SelectValue placeholder={linesLoading ? "Loading lines..." : "Select location"} />
+                  <SelectTrigger id="location" className="h-11">
+                    <SelectValue placeholder="Select location" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Machine Bank" className="font-bold">Machine Bank (Default)</SelectItem>
+                    <SelectItem value="Machine Bank">Machine Bank</SelectItem>
                     {lines?.map(l => (
                       <SelectItem key={l.name} value={l.name}>{l.name}</SelectItem>
                     ))}
@@ -168,23 +159,24 @@ export default function AddMachinePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="status" className="font-bold text-slate-700">Initial Status</Label>
+                <Label htmlFor="status" className="font-bold">Initial Status</Label>
                 <Select onValueChange={(v) => setStatus(v as MachineStatus)} value={status}>
-                  <SelectTrigger id="status" className="h-11 border-slate-200">
+                  <SelectTrigger id="status" className="h-11">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
                     {location === "Machine Bank" ? (
                       <>
-                        <SelectItem value="Bank" className="text-blue-600 font-bold">Available (Bank)</SelectItem>
-                        <SelectItem value="Repair" className="text-orange-600 font-bold">In Repair</SelectItem>
+                        <SelectItem value="Bank" className="text-blue-600">Available (Bank)</SelectItem>
+                        <SelectItem value="Repair" className="text-orange-600">In Repair</SelectItem>
+                        <SelectItem value="Breakdown" className="text-red-600">Breakdown</SelectItem>
                       </>
                     ) : (
                       <>
-                        <SelectItem value="Running" className="text-green-600 font-bold">Running</SelectItem>
-                        <SelectItem value="Idle" className="text-yellow-600 font-bold">Idle</SelectItem>
-                        <SelectItem value="Breakdown" className="text-red-600 font-bold">Breakdown</SelectItem>
-                        <SelectItem value="Repair" className="text-orange-600 font-bold">In Repair</SelectItem>
+                        <SelectItem value="Running" className="text-green-600">Running</SelectItem>
+                        <SelectItem value="Idle" className="text-yellow-600">Idle</SelectItem>
+                        <SelectItem value="Breakdown" className="text-red-600">Breakdown</SelectItem>
+                        <SelectItem value="Repair" className="text-orange-600">In Repair</SelectItem>
                       </>
                     )}
                   </SelectContent>
@@ -193,34 +185,24 @@ export default function AddMachinePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="history" className="font-bold text-slate-700">Notes / Documentation</Label>
+              <Label htmlFor="history" className="font-bold">Initial Notes</Label>
               <Textarea 
                 id="history" 
                 value={notes} 
                 onChange={(e) => setNotes(e.target.value)} 
-                placeholder="Initial condition, vendor details, or special instructions..." 
-                className="min-h-[120px] resize-none" 
+                className="min-h-[100px] resize-none" 
               />
             </div>
           </CardContent>
           <CardFooter className="flex gap-3 justify-end border-t bg-slate-50/50 p-6">
-            <Button type="button" variant="outline" onClick={() => router.back()} className="h-11 px-8 font-bold">Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
             <Button 
               type="submit" 
               disabled={isSubmitting || !selectedType} 
-              className="bg-blue-600 hover:bg-blue-700 h-11 min-w-[180px] font-black shadow-lg shadow-blue-200 transition-all hover:-translate-y-0.5"
+              className="bg-blue-600 hover:bg-blue-700 min-w-[150px] font-bold"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Registering...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Complete Registration
-                </>
-              )}
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              Save Asset
             </Button>
           </CardFooter>
         </Card>

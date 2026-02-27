@@ -54,7 +54,7 @@ export default function ScanTransferPage() {
     if (!firestore) return null
     return collection(firestore, "machines")
   }, [firestore])
-  const { data: machines, loading } = useCollection<Machine>(machinesQuery)
+  const { data: machines, isLoading: loading } = useCollection<Machine>(machinesQuery)
 
   const linesQuery = useMemoFirebase(() => {
     if (!firestore) return null
@@ -80,7 +80,6 @@ export default function ScanTransferPage() {
     const transferRef = collection(firestore, "transfers")
     const oldLocation = scannedMachine.location
 
-    // Logic: If moving to Machine Bank, set status to Bank (Available)
     const statusUpdate = newLocation === "Machine Bank" ? "Bank" : scannedMachine.status
 
     const transferData = {
@@ -94,10 +93,7 @@ export default function ScanTransferPage() {
     }
 
     try {
-      // Log the transfer
       await addDoc(transferRef, transferData)
-      
-      // Update machine location and potentially status
       await updateDoc(machineRef, { 
         location: newLocation,
         status: statusUpdate
@@ -129,7 +125,7 @@ export default function ScanTransferPage() {
         </Button>
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Machine Transfer</h2>
-          <p className="text-muted-foreground">Select an asset to relocate it to a new production line.</p>
+          <p className="text-muted-foreground">Select an asset to relocate it to a new production area.</p>
         </div>
       </div>
 
@@ -150,8 +146,7 @@ export default function ScanTransferPage() {
           <TabsContent value="list">
             <Card className="border-none shadow-lg">
               <CardHeader className="pb-3">
-                <CardTitle>Select from Master Registry</CardTitle>
-                <CardDescription>Search for a machine by its Asset ID or Type.</CardDescription>
+                <CardTitle>Master Registry</CardTitle>
                 <div className="relative mt-2">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input 
@@ -181,13 +176,13 @@ export default function ScanTransferPage() {
                             <p className="font-mono text-[10px] text-muted-foreground font-bold uppercase">{m.id}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-[10px] uppercase font-bold text-slate-400">Location</p>
+                            <p className="text-[10px] uppercase font-bold text-slate-400">Current</p>
                             <p className="text-xs font-semibold">{m.location}</p>
                           </div>
                         </div>
                       ))}
                       {filteredMachines.length === 0 && (
-                        <div className="py-12 text-center text-muted-foreground">No machines found.</div>
+                        <div className="py-12 text-center text-muted-foreground">No assets found matching search.</div>
                       )}
                     </div>
                   </ScrollArea>
@@ -200,7 +195,7 @@ export default function ScanTransferPage() {
             <Card className="border-none shadow-lg">
               <CardHeader className="text-center">
                 <CardTitle>Align QR Code</CardTitle>
-                <CardDescription>Position the machine's asset label within the frame.</CardDescription>
+                <CardDescription>Position asset label within the frame.</CardDescription>
               </CardHeader>
               <CardContent>
                 <CameraScanner onScan={(id) => handleDetect(id)} />
@@ -211,8 +206,7 @@ export default function ScanTransferPage() {
           <TabsContent value="manual">
             <Card className="border-none shadow-lg">
               <CardHeader>
-                <CardTitle>Enter Asset ID</CardTitle>
-                <CardDescription>Type the unique identifier (e.g., FB-101).</CardDescription>
+                <CardTitle>Manual Asset Entry</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -234,23 +228,22 @@ export default function ScanTransferPage() {
           </TabsContent>
         </Tabs>
       ) : (
-        <Card className="border-none shadow-xl animate-in fade-in slide-in-from-bottom-4">
+        <Card className="border-none shadow-xl">
           <CardHeader className="bg-slate-50 border-b">
             <CardTitle className="flex items-center gap-2 text-xl">
               <CheckCircle2 className="size-6 text-green-500" />
-              Identify Complete
+              Machine Identified
             </CardTitle>
-            <CardDescription>Confirm the relocation details for this asset.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 pt-6">
             <div className="grid grid-cols-2 gap-4 bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
               <div>
-                <Label className="text-[10px] uppercase text-blue-600 font-black tracking-widest">Asset Identified</Label>
+                <Label className="text-[10px] uppercase text-blue-600 font-black tracking-widest">Asset</Label>
                 <p className="font-bold text-lg leading-tight">{scannedMachine.type}</p>
                 <p className="text-xs font-mono font-bold text-slate-500 uppercase">{scannedMachine.id}</p>
               </div>
               <div className="text-right">
-                <Label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">Current Location</Label>
+                <Label className="text-[10px] uppercase text-slate-500 font-black tracking-widest">At</Label>
                 <p className="font-black text-lg text-blue-600">{scannedMachine.location}</p>
               </div>
             </div>
@@ -270,26 +263,18 @@ export default function ScanTransferPage() {
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-2">
-                <Label className="text-muted-foreground font-bold">Requested By</Label>
-                <Input defaultValue="Admin System" disabled className="bg-slate-50 h-11" />
-              </div>
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button variant="outline" className="flex-1 h-12 rounded-xl" onClick={() => {
-                setScannedMachine(null)
-                setManualId("")
-              }}>
-                Cancel / Reset
+              <Button variant="outline" className="flex-1 h-12 rounded-xl" onClick={() => setScannedMachine(null)}>
+                Cancel
               </Button>
               <Button 
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 rounded-xl shadow-lg shadow-blue-200" 
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 rounded-xl" 
                 disabled={!newLocation || isProcessing}
                 onClick={handleTransfer}
               >
-                {isProcessing ? "Processing..." : "Finish Transfer"}
+                {isProcessing ? "Processing..." : "Complete Transfer"}
                 {!isProcessing && <ArrowRight className="ml-2 size-4" />}
               </Button>
             </div>

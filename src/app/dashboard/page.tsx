@@ -27,15 +27,17 @@ export default function DashboardPage() {
     return collection(firestore, "machines")
   }, [firestore])
 
-  const { data: machines, loading: machinesLoading } = useCollection<Machine>(machinesQuery)
+  const { data: machines, isLoading: machinesLoading } = useCollection<Machine>(machinesQuery)
 
-  // Memoized derived stats for performance
+  // Memoized derived stats for maximum performance
   const stats = useMemo(() => {
     const safeMachines = machines || []
     const running = safeMachines.filter(m => m.status === 'Running' || m.status === 'Idle').length
     const bank = safeMachines.filter(m => m.status === 'Bank').length
     const repair = safeMachines.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
-    const activeTypes = Array.from(new Set(safeMachines.map(m => m.type)))
+    
+    // Only show categories that actually have machines
+    const activeTypes = Array.from(new Set(safeMachines.map(m => m.type))).filter(Boolean)
     
     return {
       running,
@@ -57,20 +59,14 @@ export default function DashboardPage() {
     "Others": { icon: 'https://picsum.photos/seed/generic/400/300', color: 'bg-slate-400' },
   }
 
-  const getTypeStats = (typeName: string) => {
-    const filtered = (machines || []).filter(m => m.type === typeName)
-    return {
-      total: filtered.length,
-      running: filtered.filter(m => m.status === 'Running' || m.status === 'Idle').length
-    }
-  }
-
   if (machinesLoading && !machines) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="size-10 animate-spin text-blue-500" />
-          <p className="text-sm font-bold text-slate-500 animate-pulse uppercase tracking-widest">Gathering Fleet Intel...</p>
+          <p className="text-sm font-bold text-slate-500 animate-pulse uppercase tracking-widest text-center">
+            Synchronizing Factory Data...
+          </p>
         </div>
       </div>
     )
@@ -126,45 +122,20 @@ export default function DashboardPage() {
             </div>
           </div>
         </Link>
-
-        <Link href="/lines">
-          <div className="flex items-center gap-5 p-6 rounded-3xl bg-white border-2 border-slate-100 text-slate-900 shadow-lg hover:border-slate-300 transition-all hover:-translate-y-1 active:scale-95 group">
-            <div className="p-3 bg-slate-100 rounded-2xl group-hover:bg-slate-200 transition-colors">
-              <Factory className="size-8" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <p className="font-black text-xl">Line Master</p>
-                <span className="bg-red-500 text-[10px] px-2 py-0.5 rounded-lg text-white font-black uppercase tracking-tighter">Live</span>
-              </div>
-              <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Floor Allocation</p>
-            </div>
-          </div>
-        </Link>
-
-        <Link href="/transfers">
-          <div className="flex items-center gap-5 p-6 rounded-3xl bg-white border-2 border-slate-100 text-slate-900 shadow-lg hover:border-slate-300 transition-all hover:-translate-y-1 active:scale-95 group">
-            <div className="p-3 bg-slate-100 rounded-2xl group-hover:bg-slate-200 transition-colors">
-              <History className="size-8" />
-            </div>
-            <div>
-              <p className="font-black text-xl">Log History</p>
-              <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">Audit Trails</p>
-            </div>
-          </div>
-        </Link>
       </div>
 
       <div className="space-y-6 pt-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Active Categories</h2>
-          <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{stats.activeTypes.length} Types Identified</span>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Available Fleet Categories</h2>
+          <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{stats.activeTypes.length} Types Active</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {stats.activeTypes.map((typeName) => {
             const meta = MACHINE_TYPE_METADATA[typeName] || MACHINE_TYPE_METADATA["Others"]
-            const stats = getTypeStats(typeName)
+            const typeMachines = (machines || []).filter(m => m.type === typeName)
+            const typeRunning = typeMachines.filter(m => m.status === 'Running' || m.status === 'Idle').length
+            
             return (
               <Card key={typeName} className="overflow-hidden border-none shadow-lg hover:shadow-2xl transition-all group rounded-3xl">
                 <CardContent className="p-0 flex items-center bg-white h-full">
@@ -173,10 +144,10 @@ export default function DashboardPage() {
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
                         <div className={cn("size-3 rounded-full animate-pulse", meta.color)} />
-                        <span className="text-sm font-black text-slate-600 uppercase tracking-wider">{stats.running} Running</span>
+                        <span className="text-sm font-black text-slate-600 uppercase tracking-wider">{typeRunning} Running</span>
                       </div>
                       <div className="text-xs text-slate-400 font-bold uppercase tracking-widest">
-                        Total Stock: <span className="font-black text-slate-900 ml-1">{stats.total}</span>
+                        Total Stock: <span className="font-black text-slate-900 ml-1">{typeMachines.length}</span>
                       </div>
                     </div>
                   </div>
@@ -196,27 +167,37 @@ export default function DashboardPage() {
           })}
           {stats.activeTypes.length === 0 && (
             <div className="col-span-2 py-16 text-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-              <p className="text-slate-500 font-black">No machines registered yet.</p>
-              <p className="text-slate-400 text-sm mt-1">Add your first asset to see analytics here.</p>
+              <p className="text-slate-500 font-black">No active machines found.</p>
+              <p className="text-slate-400 text-sm mt-1">Register assets to see your fleet analytics here.</p>
             </div>
           )}
         </div>
       </div>
 
-      <Link href="/maintenance">
-        <div className="flex items-center justify-between p-6 bg-slate-50 rounded-3xl border border-slate-100 hover:bg-slate-100 transition-all group">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-white rounded-2xl shadow-sm group-hover:scale-110 transition-transform">
-              <Wrench className="size-6 text-slate-500" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Link href="/lines">
+          <div className="flex items-center justify-between p-6 bg-white border-2 border-slate-100 rounded-3xl shadow-sm hover:border-blue-200 transition-all group">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-slate-100 rounded-2xl group-hover:bg-blue-50 transition-colors">
+                <Factory className="size-6 text-slate-600 group-hover:text-blue-600" />
+              </div>
+              <span className="font-black text-slate-800 text-lg">Line Master</span>
             </div>
-            <div>
-              <span className="font-black text-slate-800 text-lg">Maintenance Command Hub</span>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Schedules & Repairs</p>
-            </div>
+            <ChevronRight className="size-5 text-slate-300" />
           </div>
-          <ChevronRight className="size-6 text-slate-300 group-hover:text-slate-900 transition-colors" />
-        </div>
-      </Link>
+        </Link>
+        <Link href="/transfers">
+          <div className="flex items-center justify-between p-6 bg-white border-2 border-slate-100 rounded-3xl shadow-sm hover:border-blue-200 transition-all group">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-slate-100 rounded-2xl group-hover:bg-blue-50 transition-colors">
+                <History className="size-6 text-slate-600 group-hover:text-blue-600" />
+              </div>
+              <span className="font-black text-slate-800 text-lg">Log History</span>
+            </div>
+            <ChevronRight className="size-5 text-slate-300" />
+          </div>
+        </Link>
+      </div>
     </div>
   )
 }
