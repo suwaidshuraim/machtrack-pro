@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -38,7 +37,7 @@ export default function ManageMachineTypesPage() {
     if (!firestore) return null
     return collection(firestore, "machineTypes")
   }, [firestore])
-  const { data: machineTypes, isLoading: loading } = useCollection<MachineType>(typesQuery)
+  const { data: machineTypes, isLoading } = useCollection<MachineType>(typesQuery)
 
   const handleAddType = async () => {
     if (!newType.trim() || !firestore || isSaving) return
@@ -80,9 +79,9 @@ export default function ManageMachineTypesPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6" suppressHydrationWarning>
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full shadow-sm">
+        <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full shadow-sm" suppressHydrationWarning>
           <ArrowLeft className="size-4" />
         </Button>
         <div>
@@ -90,7 +89,7 @@ export default function ManageMachineTypesPage() {
         </div>
       </div>
 
-      <Card className="border-none shadow-2xl rounded-3xl overflow-hidden">
+      <Card className="border-none shadow-2xl rounded-3xl overflow-hidden" suppressHydrationWarning>
         <CardHeader className="bg-blue-600 text-white p-8">
           <CardTitle className="flex items-center gap-3 text-2xl font-black">
             <LayoutGrid className="size-8" />
@@ -109,8 +108,9 @@ export default function ManageMachineTypesPage() {
                 onKeyDown={(e) => e.key === 'Enter' && handleAddType()}
                 className="h-14 rounded-2xl border-2 font-bold px-6 text-lg"
                 disabled={isSaving}
+                suppressHydrationWarning
               />
-              <Button onClick={handleAddType} disabled={isSaving || !newType.trim()} className="bg-slate-900 h-14 px-8 rounded-2xl font-black text-lg">
+              <Button onClick={handleAddType} disabled={isSaving || !newType.trim()} className="bg-slate-900 h-14 px-8 rounded-2xl font-black text-lg" suppressHydrationWarning>
                 {isSaving ? <Loader2 className="size-5 animate-spin" /> : <Plus className="size-5 mr-2" />}
                 Add
               </Button>
@@ -119,7 +119,7 @@ export default function ManageMachineTypesPage() {
 
           <div className="space-y-4">
             <Label className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-400">Current Fleet Categories</Label>
-            {loading ? (
+            {isLoading ? (
               <div className="flex justify-center py-20">
                 <Loader2 className="size-12 animate-spin text-blue-500" />
               </div>
@@ -133,6 +133,7 @@ export default function ManageMachineTypesPage() {
                       size="icon" 
                       className="text-slate-300 hover:bg-red-50 hover:text-red-500 rounded-xl"
                       onClick={() => handleRemoveType(type.name)}
+                      suppressHydrationWarning
                     >
                       <Trash2 className="size-5" />
                     </Button>
@@ -148,7 +149,7 @@ export default function ManageMachineTypesPage() {
           </div>
         </CardContent>
         <CardFooter className="border-t bg-slate-50/50 p-8 flex justify-end">
-          <Button variant="outline" onClick={() => router.back()} className="h-12 px-8 rounded-xl font-bold">Close</Button>
+          <Button variant="outline" onClick={() => router.back()} className="h-12 px-8 rounded-xl font-bold" suppressHydrationWarning>Close</Button>
         </CardFooter>
       </Card>
     </div>

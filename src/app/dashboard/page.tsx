@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useMemo } from "react"
@@ -7,17 +6,24 @@ import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { collection } from "firebase/firestore"
 import { 
   Repeat, 
-  History, 
   LayoutGrid, 
-  ChevronRight, 
-  Wrench, 
-  Factory,
   Loader2
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Machine } from "@/lib/types"
+
+const MACHINE_TYPE_METADATA: Record<string, { icon: string, color: string }> = {
+  "Flat Bed": { icon: 'https://picsum.photos/seed/flatbed/400/300', color: 'bg-green-500' },
+  "Cylinder": { icon: 'https://picsum.photos/seed/cylinder/400/300', color: 'bg-blue-500' },
+  "High Post": { icon: 'https://picsum.photos/seed/highpost/400/300', color: 'bg-blue-600' },
+  "AMS": { icon: 'https://picsum.photos/seed/ams/400/300', color: 'bg-green-600' },
+  "Overlock": { icon: 'https://picsum.photos/seed/overlock/400/300', color: 'bg-orange-500' },
+  "Embossing": { icon: 'https://picsum.photos/seed/emboss/400/300', color: 'bg-purple-500' },
+  "Pressing": { icon: 'https://picsum.photos/seed/press/400/300', color: 'bg-amber-500' },
+  "Others": { icon: 'https://picsum.photos/seed/generic/400/300', color: 'bg-slate-400' },
+}
 
 export default function DashboardPage() {
   const firestore = useFirestore()
@@ -27,7 +33,7 @@ export default function DashboardPage() {
     return collection(firestore, "machines")
   }, [firestore])
 
-  const { data: machines, isLoading: machinesLoading } = useCollection<Machine>(machinesQuery)
+  const { data: machines, isLoading } = useCollection<Machine>(machinesQuery)
 
   const stats = useMemo(() => {
     const safeMachines = machines || []
@@ -46,18 +52,7 @@ export default function DashboardPage() {
     }
   }, [machines])
 
-  const MACHINE_TYPE_METADATA: Record<string, { icon: string, color: string }> = {
-    "Flat Bed": { icon: 'https://picsum.photos/seed/flatbed/400/300', color: 'bg-green-500' },
-    "Cylinder": { icon: 'https://picsum.photos/seed/cylinder/400/300', color: 'bg-blue-500' },
-    "High Post": { icon: 'https://picsum.photos/seed/highpost/400/300', color: 'bg-blue-600' },
-    "AMS": { icon: 'https://picsum.photos/seed/ams/400/300', color: 'bg-green-600' },
-    "Overlock": { icon: 'https://picsum.photos/seed/overlock/400/300', color: 'bg-orange-500' },
-    "Embossing": { icon: 'https://picsum.photos/seed/emboss/400/300', color: 'bg-purple-500' },
-    "Pressing": { icon: 'https://picsum.photos/seed/press/400/300', color: 'bg-amber-500' },
-    "Others": { icon: 'https://picsum.photos/seed/generic/400/300', color: 'bg-slate-400' },
-  }
-
-  if (machinesLoading && !machines) {
+  if (isLoading && !machines) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -71,7 +66,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-12">
+    <div className="max-w-4xl mx-auto space-y-8 pb-12" suppressHydrationWarning>
       <Card className="border-none shadow-xl bg-white/80 backdrop-blur-md rounded-3xl overflow-hidden">
         <CardContent className="p-8 flex flex-col md:flex-row items-center justify-around gap-6 md:gap-0">
           <div className="text-center group">
@@ -153,7 +148,8 @@ export default function DashboardPage() {
                     <Image 
                       src={meta.icon} 
                       alt={typeName} 
-                      fill 
+                      width={160}
+                      height={176}
                       className="object-cover transition-transform duration-700 group-hover:scale-125"
                       data-ai-hint="industrial machine"
                     />
