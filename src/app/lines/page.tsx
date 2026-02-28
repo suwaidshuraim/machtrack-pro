@@ -10,7 +10,8 @@ import { Factory, Plus, LayoutGrid, ArrowLeft, Search, X, Loader2, Edit2, Trash2
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, doc, deleteDoc } from "firebase/firestore"
+import { collection, doc } from "firebase/firestore"
+import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Machine, Line } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { 
@@ -55,16 +56,15 @@ export default function LineMasterPage() {
     )
   }, [lines, search])
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!lineToDelete || !firestore) return
-    try {
-      await deleteDoc(doc(firestore, "lines", lineToDelete))
-      toast({ title: "Line Deleted", description: "Production line removed from registry." })
-    } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: "Could not delete line." })
-    } finally {
-      setLineToDelete(null)
-    }
+    
+    // Use non-blocking delete per guidelines
+    const lineRef = doc(firestore, "lines", lineToDelete)
+    deleteDocumentNonBlocking(lineRef)
+    
+    toast({ title: "Line Removed", description: "Production line registry has been updated." })
+    setLineToDelete(null)
   }
 
   if (linesLoading || machinesLoading) {
@@ -79,7 +79,7 @@ export default function LineMasterPage() {
     <div className="space-y-8 max-w-5xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full shadow-sm">
+          <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full shadow-sm bg-white border-2">
             <ArrowLeft className="size-4" />
           </Button>
           <div>
@@ -153,7 +153,6 @@ export default function LineMasterPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-8">
-                {/* LINE SUMMARY SECTION - Responsive Status Breakdown */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                   <div className="bg-slate-50 rounded-3xl p-5 border-2 border-slate-100 flex items-center justify-between group/stat">
                     <div>
@@ -205,12 +204,6 @@ export default function LineMasterPage() {
             </Card>
           )
         })}
-        {filteredLines.length === 0 && (
-          <div className="text-center py-24 opacity-30">
-            <Factory className="size-20 mx-auto mb-6 text-slate-300" />
-            <p className="font-black text-2xl uppercase tracking-[0.2em] text-slate-400">No Registry Found</p>
-          </div>
-        )}
       </div>
 
       <AlertDialog open={!!lineToDelete} onOpenChange={() => setLineToDelete(null)}>

@@ -21,8 +21,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, doc, updateDoc, addDoc } from "firebase/firestore"
+import { useFirestore, useCollection, useMemoFirebase, useUser } from "@/firebase"
+import { collection, doc } from "firebase/firestore"
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Machine, Line, User } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
@@ -50,6 +51,7 @@ export default function ScanTransferPage() {
   const { toast } = useToast()
   const router = useRouter()
   const firestore = useFirestore()
+  const { user } = useUser()
 
   const machinesQuery = useMemoFirebase(() => {
     if (!firestore) return null
@@ -79,15 +81,16 @@ export default function ScanTransferPage() {
     }
   }
 
-  const handleTransfer = async () => {
+  const handleTransfer = () => {
     if (!scannedMachine || !newLocation || !firestore || isProcessing) return
 
     setIsProcessing(true)
     const machineRef = doc(firestore, "machines", scannedMachine.id)
     const transferRef = collection(firestore, "transfers")
     const oldLocation = scannedMachine.location
-
     const statusUpdate = newLocation === "Machine Bank" ? "Bank" : scannedMachine.status
+
+    const requesterName = user ? (user.displayName || user.email || "Floor Operator") : "Floor Operator"
 
     const transferData = {
       machineId: scannedMachine.id,
@@ -95,24 +98,24 @@ export default function ScanTransferPage() {
       fromLocation: oldLocation,
       toLocation: newLocation,
       transferDate: new Date().toISOString(),
-      requestedBy: "Floor Operator",
+      requestedBy: requesterName,
       authorizedBy: authorizedBy || "Auto-Approved",
       status: "Completed"
     }
 
-    try {
-      await addDoc(transferRef, transferData)
-      await updateDoc(machineRef, { 
-        location: newLocation,
-        status: statusUpdate
-      })
-      
-      toast({ title: "Transfer Completed", description: `Asset relocated to ${newLocation}.` })
+    // Use non-blocking pattern per guidelines
+    addDocumentNonBlocking(transferRef, transferData)
+    updateDocumentNonBlocking(machineRef, { 
+      location: newLocation,
+      status: statusUpdate
+    })
+    
+    toast({ title: "Relocation Initiated", description: `Asset is moving to ${newLocation}.` })
+    
+    // Give a tiny moment for local cache before redirecting
+    setTimeout(() => {
       router.push('/dashboard')
-    } catch (error) {
-      toast({ variant: "destructive", title: "Transfer Failed", description: "Check permissions and try again." })
-      setIsProcessing(false)
-    }
+    }, 500)
   }
 
   const filteredMachines = machines?.filter(m => 
@@ -123,7 +126,7 @@ export default function ScanTransferPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full">
+        <Button variant="outline" size="icon" onClick={() => router.back()} className="rounded-full shadow-sm bg-white border-2 border-slate-100">
           <ArrowLeft className="size-4" />
         </Button>
         <div>
@@ -147,13 +150,13 @@ export default function ScanTransferPage() {
           </TabsList>
           
           <TabsContent value="list">
-            <Card className="border-none shadow-xl rounded-3xl">
+            <Card className="border-none shadow-xl rounded-3xl bg-white overflow-hidden">
               <CardHeader className="pb-3">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input 
                     placeholder="Search machines..." 
-                    className="pl-9 h-11 bg-slate-50 border-none rounded-xl"
+                    className="pl-9 h-11 bg-slate-50 border-none rounded-xl font-bold"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -168,7 +171,7 @@ export default function ScanTransferPage() {
                       {filteredMachines.map((m) => (
                         <div 
                           key={m.id}
-                          className="flex items-center justify-between p-4 rounded-2xl border-2 border-transparent bg-white hover:border-primary hover:bg-blue-50/50 cursor-pointer transition-all group"
+                          className="flex items-center justify-between p-4 rounded-2xl border-2 border-transparent bg-slate-50 hover:border-primary hover:bg-blue-50/50 cursor-pointer transition-all group"
                           onClick={() => handleDetect(m.id)}
                         >
                           <div>
@@ -189,10 +192,10 @@ export default function ScanTransferPage() {
           </TabsContent>
 
           <TabsContent value="scan">
-            <Card className="border-none shadow-xl rounded-3xl overflow-hidden">
-              <CardHeader className="text-center bg-slate-900 text-white">
-                <CardTitle className="font-black">Optical QR Scan</CardTitle>
-                <CardDescription className="text-slate-400">Position the asset tag within the viewfinder.</CardDescription>
+            <Card className="border-none shadow-xl rounded-3xl overflow-hidden bg-white">
+              <CardHeader className="text-center bg-slate-900 text-white p-8">
+                <CardTitle className="font-black text-2xl">Optical QR Scan</CardTitle>
+                <CardDescription className="text-slate-400 font-medium">Position the asset tag within the viewfinder.</CardDescription>
               </CardHeader>
               <CardContent className="p-8">
                 <CameraScanner onScan={(id) => handleDetect(id)} />
@@ -201,7 +204,7 @@ export default function ScanTransferPage() {
           </TabsContent>
 
           <TabsContent value="manual">
-            <Card className="border-none shadow-xl rounded-3xl">
+            <Card className="border-none shadow-xl rounded-3xl bg-white">
               <CardHeader>
                 <CardTitle className="font-black text-lg">Direct Identifier Input</CardTitle>
               </CardHeader>
@@ -225,7 +228,7 @@ export default function ScanTransferPage() {
           </TabsContent>
         </Tabs>
       ) : (
-        <Card className="border-none shadow-2xl rounded-3xl overflow-hidden">
+        <Card className="border-none shadow-2xl rounded-3xl overflow-hidden bg-white">
           <CardHeader className="bg-emerald-600 text-white p-8">
             <CardTitle className="flex items-center gap-3 text-2xl font-black">
               <CheckCircle2 className="size-8" />
@@ -249,7 +252,7 @@ export default function ScanTransferPage() {
               <div className="space-y-3">
                 <Label className="font-black text-[10px] uppercase tracking-widest text-primary">Destination Line</Label>
                 <Select onValueChange={setNewLocation} value={newLocation}>
-                  <SelectTrigger className="h-12 border-2 rounded-xl font-black">
+                  <SelectTrigger className="h-14 border-2 rounded-2xl font-black">
                     <SelectValue placeholder="Select target location" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -264,16 +267,16 @@ export default function ScanTransferPage() {
               <div className="space-y-3">
                 <Label className="font-black text-[10px] uppercase tracking-widest text-slate-400">Authorization (Optional)</Label>
                 <Select onValueChange={setAuthorizedBy} value={authorizedBy}>
-                  <SelectTrigger className="h-12 border-2 rounded-xl font-bold">
+                  <SelectTrigger className="h-14 border-2 rounded-2xl font-bold">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="size-4 text-slate-400" />
                       <SelectValue placeholder="Authorized by..." />
                     </div>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    {users?.map(user => (
-                      <SelectItem key={user.id} value={`${user.firstName} ${user.lastName}`} className="py-3 font-bold">
-                        {user.firstName} {user.lastName} ({user.role})
+                    {users?.map(u => (
+                      <SelectItem key={u.id} value={`${u.firstName} ${u.lastName}`} className="py-3 font-bold">
+                        {u.firstName} {u.lastName} ({u.role})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -282,15 +285,15 @@ export default function ScanTransferPage() {
             </div>
 
             <div className="flex gap-4 pt-4">
-              <Button variant="outline" className="flex-1 h-14 rounded-xl font-black" onClick={() => setScannedMachine(null)}>
+              <Button variant="outline" className="flex-1 h-14 rounded-2xl font-black border-2" onClick={() => setScannedMachine(null)}>
                 Change Unit
               </Button>
               <Button 
-                className="flex-1 bg-primary hover:bg-primary/90 text-white font-black h-14 rounded-xl text-lg shadow-xl" 
+                className="flex-1 bg-primary hover:bg-primary/95 text-white font-black h-14 rounded-2xl text-lg shadow-xl shadow-primary/20" 
                 disabled={!newLocation || isProcessing}
                 onClick={handleTransfer}
               >
-                {isProcessing ? "Updating..." : "Complete Relocation"}
+                {isProcessing ? <Loader2 className="animate-spin size-5" /> : "Complete Relocation"}
                 {!isProcessing && <ArrowRight className="ml-2 size-5" />}
               </Button>
             </div>

@@ -1,79 +1,10 @@
 
-import { Machine, Transfer, MaintenanceTask } from './types';
+/**
+ * MachTrack Pro - Live Data Registry
+ * Mock data has been decommissioned to ensure full Firestore dynamic synchronization.
+ */
 
-// Centralized machine types that can be managed
-export let MACHINE_TYPES = [
-  "Flat Bed",
-  "Cylinder",
-  "High Post",
-  "AMS",
-  "Overlock",
-  "Embossing",
-  "Pressing",
-  "Others"
-];
-
-export const MACHINES: Machine[] = [
-  ...Array(15).fill(null).map((_, i) => ({
-    id: `FB-${100 + i}`,
-    name: `Flat Bed Stitcher ${i + 1}`,
-    serialNumber: `SN-FB-${1000 + i}`,
-    type: 'Flat Bed',
-    location: i < 5 ? 'Line 1' : i < 10 ? 'Line 2' : 'Machine Bank',
-    status: (i < 8 ? 'Running' : 'Idle') as any,
-    lastMaintenanceDate: '2024-10-15',
-    lastInspectionDate: '2024-11-20',
-    usageHistory: 'Standard production use.',
-    imageUrl: 'https://picsum.photos/seed/flatbed/400/300',
-  })),
-  ...Array(10).fill(null).map((_, i) => ({
-    id: `CB-${200 + i}`,
-    name: `Cylinder Bed ${i + 1}`,
-    serialNumber: `SN-CB-${2000 + i}`,
-    type: 'Cylinder',
-    location: i < 5 ? 'Line 3' : 'Machine Bank',
-    status: (i === 0 ? 'Breakdown' : 'Running') as any,
-    lastMaintenanceDate: '2024-12-01',
-    lastInspectionDate: '2024-11-05',
-    usageHistory: 'Heavy material processing.',
-    imageUrl: 'https://picsum.photos/seed/cylinder/400/300',
-  })),
-  ...Array(25).fill(null).map((_, i) => ({
-    id: `AMS-${300 + i}`,
-    name: `AMS Automated ${i + 1}`,
-    serialNumber: `SN-AMS-${3000 + i}`,
-    type: 'AMS',
-    location: i < 10 ? 'Line 4' : i < 20 ? 'Line 5' : 'Machine Bank',
-    status: (i % 10 === 0 ? 'Repair' : i % 7 === 0 ? 'Bank' : 'Running') as any,
-    lastMaintenanceDate: '2024-08-20',
-    lastInspectionDate: '2024-09-10',
-    usageHistory: 'Pattern stitching specialist.',
-    imageUrl: 'https://picsum.photos/seed/ams/400/300',
-  })),
-];
-
-export const TRANSFERS: Transfer[] = [
-  {
-    id: 'TR-1001',
-    machineId: 'FB-101',
-    machineName: 'Flat Bed Stitcher 2',
-    fromLocation: 'Machine Bank',
-    toLocation: 'Line 1',
-    transferDate: '2024-12-15',
-    requestedBy: 'Admin',
-    status: 'Completed',
-  }
-];
-
-export const MAINTENANCE_TASKS: MaintenanceTask[] = [
-  {
-    id: 'MT-5001',
-    machineId: 'CB-200',
-    machineName: 'Cylinder Bed 1',
-    description: 'Scheduled calibration.',
-    priority: 'High',
-    scheduledDate: '2025-02-28',
-    assignedTechnician: 'Robert M.',
-    status: 'Scheduled',
-  }
-];
+export const MACHINE_TYPES: string[] = [];
+export const MACHINES: any[] = [];
+export const TRANSFERS: any[] = [];
+export const MAINTENANCE_TASKS: any[] = [];

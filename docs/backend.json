@@ -72,6 +72,22 @@
         "status": { "type": "string" }
       },
       "required": ["machineId", "fromLocation", "toLocation", "transferDate"]
+    },
+    "MaintenanceTask": {
+      "title": "MaintenanceTask",
+      "type": "object",
+      "description": "Scheduled or emergency maintenance job.",
+      "properties": {
+        "id": { "type": "string" },
+        "machineId": { "type": "string" },
+        "machineName": { "type": "string" },
+        "description": { "type": "string" },
+        "priority": { "type": "string", "enum": ["Low", "Medium", "High", "Urgent"] },
+        "scheduledDate": { "type": "string", "format": "date" },
+        "assignedTechnician": { "type": "string" },
+        "status": { "type": "string", "enum": ["Scheduled", "In Progress", "Completed", "Overdue"] }
+      },
+      "required": ["machineId", "description", "priority", "status"]
     }
   },
   "auth": {
@@ -97,6 +113,10 @@
     "/transfers/{transferId}": {
       "schema": "#/backend/entities/MachineTransfer",
       "description": "Movement history"
+    },
+    "/maintenanceTasks/{taskId}": {
+      "schema": "#/backend/entities/MaintenanceTask",
+      "description": "Maintenance job registry"
     }
   }
 }
