@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Factory, Plus, LayoutGrid, ArrowLeft, Search, X, Loader2, Edit2, Trash2, Eye } from "lucide-react"
+import { Factory, Plus, LayoutGrid, ArrowLeft, Search, X, Loader2, Edit2, Trash2, Eye, Box, TrendingUp, Info } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
@@ -91,9 +91,9 @@ export default function LineMasterPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input 
               placeholder="Search lines..." 
-              className="pl-9 h-11 w-48 md:w-64 bg-slate-50 border-none rounded-xl"
+              className="pl-9 h-11 w-48 md:w-64 bg-slate-50 border-none rounded-xl font-bold text-xs"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => setSearch(search)}
             />
           </div>
           <Button className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg h-11 font-bold rounded-xl" asChild>
@@ -112,65 +112,92 @@ export default function LineMasterPage() {
           const repairCount = lineMachines.filter(m => m.status === 'Breakdown' || m.status === 'Repair').length
 
           return (
-            <Card key={line.id} className="overflow-hidden border-none shadow-md bg-white hover:shadow-xl transition-all group border-l-4 border-l-transparent hover:border-l-primary rounded-3xl">
-              <CardHeader className="bg-slate-50/50 border-b py-5 flex flex-row items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-primary rounded-2xl text-white shadow-lg">
-                    <Factory className="size-6" />
+            <Card key={line.id} className="overflow-hidden border-none shadow-md bg-white hover:shadow-xl transition-all group border-l-4 border-l-transparent hover:border-l-primary rounded-[32px]">
+              <CardHeader className="bg-slate-50/50 border-b py-6 flex flex-row items-center justify-between px-8">
+                <div className="flex items-center gap-5">
+                  <div className="p-4 bg-primary rounded-2xl text-white shadow-xl group-hover:scale-105 transition-transform">
+                    <Factory className="size-7" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl font-black text-slate-800">{line.name}</CardTitle>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-                      Sup: {line.supervisor || 'Unassigned'}
-                    </p>
+                    <CardTitle className="text-2xl font-black text-slate-900 tracking-tight">{line.name}</CardTitle>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        Lead: {line.supervisor || 'Unassigned'}
+                      </span>
+                      <Badge variant="outline" className="text-[9px] font-black uppercase tracking-tighter border-slate-200">
+                        {lineMachines.length} Units
+                      </Badge>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                   <Button variant="ghost" size="icon" className="rounded-full hover:bg-blue-50 text-blue-600" asChild>
+                   <Button variant="ghost" size="icon" className="rounded-2xl h-11 w-11 hover:bg-blue-50 text-blue-600" asChild>
                       <Link href={`/lines/${line.id}`}>
-                        <Eye className="size-4" />
+                        <Eye className="size-5" />
                       </Link>
                    </Button>
-                   <Button variant="ghost" size="icon" className="rounded-full hover:bg-slate-100" asChild>
+                   <Button variant="ghost" size="icon" className="rounded-2xl h-11 w-11 hover:bg-slate-100" asChild>
                       <Link href={`/lines/${line.id}/edit`}>
-                        <Edit2 className="size-4" />
+                        <Edit2 className="size-5" />
                       </Link>
                    </Button>
                    <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="rounded-full hover:bg-red-50 text-red-500"
+                    className="rounded-2xl h-11 w-11 hover:bg-red-50 text-red-500"
                     onClick={() => setLineToDelete(line.id)}
                    >
-                      <Trash2 className="size-4" />
+                      <Trash2 className="size-5" />
                    </Button>
                 </div>
               </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Fleet</p>
-                    <p className="text-2xl font-black text-slate-800">{lineMachines.length} units</p>
+              <CardContent className="p-8">
+                {/* LINE SUMMARY SECTION - Responsive Status Breakdown */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                  <div className="bg-slate-50 rounded-3xl p-5 border-2 border-slate-100 flex items-center justify-between group/stat">
+                    <div>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Total Fleet</p>
+                      <p className="text-3xl font-black text-slate-900 tracking-tighter">{lineMachines.length}</p>
+                    </div>
+                    <div className="p-3 bg-white rounded-2xl shadow-sm text-slate-400 group-hover/stat:text-primary transition-colors">
+                      <Box className="size-6" />
+                    </div>
                   </div>
-                  <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-100">
-                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Running</p>
-                    <p className="text-2xl font-black text-emerald-700">{activeCount}</p>
+                  <div className="bg-emerald-50 rounded-3xl p-5 border-2 border-emerald-100 flex items-center justify-between group/stat">
+                    <div>
+                      <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-1">Operational</p>
+                      <p className="text-3xl font-black text-emerald-700 tracking-tighter">{activeCount}</p>
+                    </div>
+                    <div className="p-3 bg-white rounded-2xl shadow-sm text-emerald-400 group-hover/stat:text-emerald-600 transition-colors">
+                      <TrendingUp className="size-6" />
+                    </div>
                   </div>
-                  <div className="bg-red-50 rounded-2xl p-4 border border-red-100">
-                    <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">In Repair</p>
-                    <p className="text-2xl font-black text-red-700">{repairCount}</p>
+                  <div className="bg-red-50 rounded-3xl p-5 border-2 border-red-100 flex items-center justify-between group/stat">
+                    <div>
+                      <p className="text-[10px] font-black text-red-600 uppercase tracking-[0.2em] mb-1">In Repair</p>
+                      <p className="text-3xl font-black text-red-700 tracking-tighter">{repairCount}</p>
+                    </div>
+                    <div className="p-3 bg-white rounded-2xl shadow-sm text-red-400 group-hover/stat:text-red-600 transition-colors">
+                      <Info className="size-6" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-5 border-t border-slate-50">
-                   <Button variant="ghost" size="sm" className="text-primary font-black px-4 rounded-xl" asChild>
+                <div className="flex items-center justify-between pt-6 border-t border-slate-50">
+                   <Button variant="ghost" size="sm" className="text-primary font-black px-6 h-12 rounded-2xl hover:bg-primary/5" asChild>
                       <Link href="/machines">
-                        <LayoutGrid className="mr-2 size-4" />
-                        Audit Machines
+                        <LayoutGrid className="mr-3 size-5" />
+                        Audit Floor Machines
                       </Link>
                    </Button>
-                   <Badge variant="outline" className="font-black text-[10px] uppercase tracking-widest rounded-full px-4">
-                    Live Status: {repairCount > 0 ? 'Action Needed' : 'Nominal'}
+                   <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "font-black text-[10px] uppercase tracking-widest rounded-full px-5 py-2",
+                      repairCount > 0 ? "text-red-600 border-red-200 bg-red-50" : "text-emerald-600 border-emerald-200 bg-emerald-50"
+                    )}
+                   >
+                    System Status: {repairCount > 0 ? 'Critical Attention' : 'Optimal'}
                    </Badge>
                 </div>
               </CardContent>
@@ -178,24 +205,24 @@ export default function LineMasterPage() {
           )
         })}
         {filteredLines.length === 0 && (
-          <div className="text-center py-20 opacity-40">
-            <Factory className="size-16 mx-auto mb-4" />
-            <p className="font-black text-lg uppercase tracking-widest">No production lines found</p>
+          <div className="text-center py-24 opacity-30">
+            <Factory className="size-20 mx-auto mb-6 text-slate-300" />
+            <p className="font-black text-2xl uppercase tracking-[0.2em] text-slate-400">No Registry Found</p>
           </div>
         )}
       </div>
 
       <AlertDialog open={!!lineToDelete} onOpenChange={() => setLineToDelete(null)}>
-        <AlertDialogContent className="rounded-3xl border-none shadow-2xl">
+        <AlertDialogContent className="rounded-[32px] border-none shadow-2xl p-10">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-black text-2xl">Delete line configuration?</AlertDialogTitle>
-            <AlertDialogDescription className="font-medium text-slate-500">
-              This will permanently delete this production line from the registry. This action cannot be undone.
+            <AlertDialogTitle className="font-black text-3xl tracking-tight text-slate-900">Remove Line Configuration?</AlertDialogTitle>
+            <AlertDialogDescription className="text-lg font-medium text-slate-500 mt-2">
+              This will permanently delete this production line from the registry. All machines assigned to this line will remain in the database but will need relocation.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel className="rounded-xl h-12 font-bold">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 rounded-xl h-12 font-black">Delete Line</AlertDialogAction>
+          <AlertDialogFooter className="gap-3 mt-8">
+            <AlertDialogCancel className="rounded-2xl h-14 px-8 font-black text-slate-600 border-2">Keep Registry</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 rounded-2xl h-14 px-8 font-black shadow-xl shadow-red-200">Confirm Deletion</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

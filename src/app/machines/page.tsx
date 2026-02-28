@@ -66,7 +66,8 @@ export default function MachineMasterPage() {
 
   const availableLocations = useMemo(() => {
     if (!machines) return []
-    return Array.from(new Set(machines.map(m => m.location)))
+    const locations = Array.from(new Set(machines.map(m => m.location)))
+    return locations.sort()
   }, [machines])
 
   const filteredMachines = useMemo(() => {
@@ -145,11 +146,11 @@ export default function MachineMasterPage() {
       <Card className="border-none shadow-xl overflow-hidden rounded-3xl">
         <CardHeader className="bg-white border-b py-4 md:py-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="relative w-full md:w-96">
+            <div className="relative w-full md:w-80">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="Search assets..." 
-                className="pl-10 h-10 md:h-11 bg-slate-50 border-none focus-visible:ring-1 focus-visible:ring-primary/20 rounded-xl"
+                className="pl-10 h-10 md:h-11 bg-slate-50 border-none focus-visible:ring-1 focus-visible:ring-primary/20 rounded-xl text-xs font-bold"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -162,10 +163,10 @@ export default function MachineMasterPage() {
                 </button>
               )}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 md:h-11">
+                  <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 md:h-11 whitespace-nowrap text-[10px] md:text-xs">
                     <Filter className="mr-2 size-3" />
                     Status: {statusFilter}
                   </Button>
@@ -184,7 +185,7 @@ export default function MachineMasterPage() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 md:h-11">
+                  <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 md:h-11 whitespace-nowrap text-[10px] md:text-xs">
                     <Box className="mr-2 size-3" />
                     Type: {typeFilter === 'All' ? 'All' : typeFilter}
                   </Button>
@@ -194,6 +195,23 @@ export default function MachineMasterPage() {
                     <DropdownMenuRadioItem value="All">All Types</DropdownMenuRadioItem>
                     {machineTypes?.map(t => (
                       <DropdownMenuRadioItem key={t.name} value={t.name}>{t.name}</DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 md:h-11 whitespace-nowrap text-[10px] md:text-xs">
+                    <MapPin className="mr-2 size-3" />
+                    Loc: {locationFilter === 'All' ? 'All' : locationFilter}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-xl font-bold">
+                  <DropdownMenuRadioGroup value={locationFilter} onValueChange={setLocationFilter}>
+                    <DropdownMenuRadioItem value="All">All Locations</DropdownMenuRadioItem>
+                    {availableLocations.map(loc => (
+                      <DropdownMenuRadioItem key={loc} value={loc}>{loc}</DropdownMenuRadioItem>
                     ))}
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
@@ -212,37 +230,37 @@ export default function MachineMasterPage() {
               <div className="hidden md:block">
                 <Table>
                   <TableHeader className="bg-slate-50/50">
-                    <TableRow>
-                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4">ID / Serial</TableHead>
+                    <TableRow className="border-none">
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 pl-6">ID / Serial</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest">Type</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest">Location</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest">Status</TableHead>
-                      <TableHead className="text-right pr-6 font-black text-[10px] uppercase tracking-widest">Details</TableHead>
+                      <TableHead className="text-right pr-8 font-black text-[10px] uppercase tracking-widest">Details</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredMachines.map((machine) => (
-                      <TableRow key={machine.id} className="hover:bg-blue-50/30 transition-colors">
-                        <TableCell className="py-4">
+                      <TableRow key={machine.id} className="hover:bg-blue-50/30 transition-colors border-slate-50">
+                        <TableCell className="py-4 pl-6">
                           <div className="flex flex-col">
                             <span className="font-black text-xs text-primary tracking-tighter">{machine.id}</span>
                             <span className="text-[9px] font-bold text-slate-400 uppercase">{machine.serialNumber}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="font-bold text-sm">{machine.type}</TableCell>
+                        <TableCell className="font-bold text-sm text-slate-700">{machine.type}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 font-black text-[9px] uppercase">
+                          <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 font-black text-[9px] uppercase px-3 py-1">
                             {machine.location}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <div className={cn("size-2 rounded-full", getStatusColor(machine.status))} />
-                            <span className="text-xs font-bold text-slate-600">{machine.status}</span>
+                            <div className={cn("size-2 rounded-full shadow-sm", getStatusColor(machine.status))} />
+                            <span className="text-xs font-black text-slate-600 uppercase tracking-tighter">{machine.status}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-right pr-6">
-                          <Button variant="ghost" size="icon" className="hover:bg-primary hover:text-white rounded-xl" asChild>
+                        <TableCell className="text-right pr-8">
+                          <Button variant="ghost" size="icon" className="hover:bg-primary hover:text-white rounded-xl transition-all" asChild>
                             <Link href={`/machines/${machine.id}`}>
                               <ChevronRight className="h-4 w-4" />
                             </Link>
@@ -257,28 +275,35 @@ export default function MachineMasterPage() {
               {/* Mobile Card View */}
               <div className="md:hidden divide-y divide-slate-100">
                 {filteredMachines.map((machine) => (
-                  <Link key={machine.id} href={`/machines/${machine.id}`} className="block p-4 active:bg-slate-50 transition-colors">
-                    <div className="flex items-center justify-between mb-2">
+                  <Link key={machine.id} href={`/machines/${machine.id}`} className="block p-5 active:bg-slate-50 transition-colors">
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex flex-col">
-                        <span className="font-black text-sm text-primary">{machine.id}</span>
-                        <span className="text-[10px] font-bold text-slate-400">{machine.type}</span>
+                        <span className="font-black text-sm text-primary uppercase tracking-tight">{machine.id}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">{machine.type}</span>
                       </div>
-                      <Badge className={cn("text-white text-[9px] font-black uppercase", getStatusColor(machine.status))}>
+                      <Badge className={cn("text-white text-[9px] font-black uppercase tracking-widest px-3", getStatusColor(machine.status))}>
                         {machine.status}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-2 text-slate-500">
-                      <MapPin className="size-3" />
-                      <span className="text-[10px] font-bold uppercase tracking-wide">{machine.location}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-slate-500">
+                        <MapPin className="size-3 text-primary/40" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{machine.location}</span>
+                      </div>
+                      <ChevronRight className="size-4 text-slate-300" />
                     </div>
                   </Link>
                 ))}
               </div>
 
               {filteredMachines.length === 0 && (
-                <div className="h-64 flex flex-col items-center justify-center gap-2 opacity-40">
-                  <Search className="size-12 mb-2" />
-                  <p className="font-black text-lg uppercase tracking-widest">No machines found</p>
+                <div className="h-80 flex flex-col items-center justify-center gap-3 opacity-20">
+                  <Search className="size-16 mb-2" />
+                  <div className="text-center">
+                    <p className="font-black text-xl uppercase tracking-widest">No Matches</p>
+                    <p className="text-sm font-bold">Try adjusting your filters.</p>
+                  </div>
+                  <Button variant="link" onClick={clearFilters} className="font-black text-primary uppercase text-xs">Clear All Filters</Button>
                 </div>
               )}
             </>
