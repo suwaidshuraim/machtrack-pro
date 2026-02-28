@@ -3,6 +3,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { 
   Card, 
   CardContent, 
@@ -25,6 +26,7 @@ import { Input } from "@/components/ui/input"
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
 import { collection, query, orderBy } from "firebase/firestore"
 import { Transfer } from "@/lib/types"
+import { cn } from "@/lib/utils"
 
 export default function TransfersPage() {
   const [search, setSearch] = useState("")
@@ -52,14 +54,14 @@ export default function TransfersPage() {
             <ArrowLeft className="size-4" />
           </Button>
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Machine Transfers</h2>
-            <p className="text-muted-foreground">Initiate and track the relocation of manufacturing equipment.</p>
+            <h2 className="text-3xl font-bold tracking-tight">History</h2>
+            <p className="text-muted-foreground">Track the relocation history of manufacturing equipment.</p>
           </div>
         </div>
         <Button className="bg-accent hover:bg-accent/90 text-white" asChild>
           <Link href="/transfer/scan">
             <Plus className="mr-2 size-4" />
-            Request Transfer
+            Transfer Machine
           </Link>
         </Button>
       </div>
