@@ -64,14 +64,10 @@ export default function DashboardPage() {
     const sRef = storageRef(storage, imagePath)
 
     try {
-      // 1. Upload to Storage
       await uploadBytes(sRef, file)
       const downloadURL = await getDownloadURL(sRef)
-      
-      // 2. Update Firestore
       const typeDocRef = doc(firestore, "machineTypes", activeTypeId)
       await updateDoc(typeDocRef, { imageUrl: downloadURL })
-      
       toast({ title: "Success", description: "Machine image updated in real-time." })
     } catch (error) {
       console.error("Upload failed", error)
@@ -106,36 +102,36 @@ export default function DashboardPage() {
         onChange={handleImageUpload} 
       />
 
-      {/* SECTION 1: Summary Cards */}
+      {/* SECTION 1: Machine Statistics */}
       <section className="space-y-4">
-        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Fleet Statistics</h2>
+        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Machine Statistics</h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           <Card className="border-none shadow-xl bg-white rounded-3xl overflow-hidden">
             <CardContent className="p-6 md:p-8 flex flex-col items-center justify-center text-center">
               <Box className="size-6 text-primary mb-2" />
               <span className="text-4xl font-black text-slate-900 tracking-tighter">{stats.total}</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Total Assets</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Total Machine</span>
             </CardContent>
           </Card>
           <Card className="border-none shadow-xl bg-white rounded-3xl overflow-hidden">
             <CardContent className="p-6 md:p-8 flex flex-col items-center justify-center text-center">
               <TrendingUp className="size-6 text-emerald-500 mb-2" />
               <span className="text-4xl font-black text-slate-900 tracking-tighter">{stats.active}</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">Operational</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">Active / Running / Idle</span>
             </CardContent>
           </Card>
           <Card className="border-none shadow-xl bg-white rounded-3xl overflow-hidden">
             <CardContent className="p-6 md:p-8 flex flex-col items-center justify-center text-center">
               <Warehouse className="size-6 text-blue-500 mb-2" />
               <span className="text-4xl font-black text-slate-900 tracking-tighter">{stats.bank}</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 mt-1">In Bank</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 mt-1">Machine Bank</span>
             </CardContent>
           </Card>
           <Card className="border-none shadow-xl bg-white rounded-3xl overflow-hidden">
             <CardContent className="p-6 md:p-8 flex flex-col items-center justify-center text-center">
               <Wrench className="size-6 text-red-500 mb-2" />
               <span className="text-4xl font-black text-slate-900 tracking-tighter">{stats.repair}</span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-red-500 mt-1">In Repair</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-red-500 mt-1">Repair / Breakdown</span>
             </CardContent>
           </Card>
         </div>

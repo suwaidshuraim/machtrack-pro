@@ -13,11 +13,11 @@ import {
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { title: "Home", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Fleet", url: "/machines", icon: Box },
-  { title: "Scan", url: "/transfer/scan", icon: QrCode },
-  { title: "Lines", url: "/lines", icon: Factory },
-  { title: "Logs", url: "/transfers", icon: History },
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Machine Master", url: "/machines", icon: Box },
+  { title: "Transfer Machine", url: "/transfer/scan", icon: QrCode },
+  { title: "Line Master", url: "/lines", icon: Factory },
+  { title: "History", url: "/transfers", icon: History },
 ]
 
 export function BottomNav() {

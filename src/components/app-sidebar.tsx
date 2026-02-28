@@ -31,8 +31,8 @@ const mainNav = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
   { title: "Machine Master", url: "/machines", icon: Box },
   { title: "Line Master", url: "/lines", icon: Factory },
-  { title: "Machine Transfer", url: "/transfer/scan", icon: QrCode },
-  { title: "Transfer History", url: "/transfers", icon: History },
+  { title: "Transfer Machine", url: "/transfer/scan", icon: QrCode },
+  { title: "History", url: "/transfers", icon: History },
 ]
 
 export function AppSidebar() {
