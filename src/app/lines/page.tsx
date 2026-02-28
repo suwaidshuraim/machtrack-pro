@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { cn } from "@/lib/utils"
 
 export default function LineMasterPage() {
   const router = useRouter()
@@ -93,7 +94,7 @@ export default function LineMasterPage() {
               placeholder="Search lines..." 
               className="pl-9 h-11 w-48 md:w-64 bg-slate-50 border-none rounded-xl font-bold text-xs"
               value={search}
-              onChange={(e) => setSearch(search)}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           <Button className="bg-slate-900 hover:bg-slate-800 text-white shadow-lg h-11 font-bold rounded-xl" asChild>

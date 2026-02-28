@@ -71,11 +71,23 @@ export default function TransfersPage() {
   const [search, setSearch] = useState("")
   const [machineFilter, setMachineFilter] = useState("all")
   const [lineFilter, setLineFilter] = useState("all")
+  
+  // Initialize to undefined to avoid hydration mismatch between server and client time
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
-    from: startOfDay(new Date()),
-    to: endOfDay(new Date()),
+    from: undefined,
+    to: undefined,
   })
-  const [quickFilter, setQuickFilter] = useState<string | null>("today")
+  const [quickFilter, setQuickFilter] = useState<string | null>(null)
+
+  // Set initial "Today" filter on mount
+  useEffect(() => {
+    const now = new Date()
+    setDateRange({
+      from: startOfDay(now),
+      to: endOfDay(now),
+    })
+    setQuickFilter("today")
+  }, [])
 
   // Data Fetching
   const transfersQuery = useMemoFirebase(() => {
@@ -388,8 +400,8 @@ export default function TransfersPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-0.5 text-xs font-bold text-slate-500">
-                          <span>{format(new Date(t.transferDate), "MMM dd, yyyy")}</span>
-                          <span className="text-[10px] font-medium opacity-40">{format(new Date(t.transferDate), "HH:mm")}</span>
+                          <span>{t.transferDate ? format(new Date(t.transferDate), "MMM dd, yyyy") : 'N/A'}</span>
+                          <span className="text-[10px] font-medium opacity-40">{t.transferDate ? format(new Date(t.transferDate), "HH:mm") : ''}</span>
                         </div>
                       </TableCell>
                       <TableCell>
