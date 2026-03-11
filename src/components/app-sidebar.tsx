@@ -38,7 +38,7 @@ export function AppSidebar() {
   const pathname = usePathname()
 
   return (
-    <Sidebar variant="sidebar" collapsible="none" className="hidden md:flex border-r border-slate-800 bg-slate-950 text-slate-200">
+    <Sidebar variant="sidebar" collapsible="none" className="max-md:hidden flex-shrink-0 border-r border-slate-800 bg-slate-950 text-slate-200">
       <SidebarHeader className="p-8">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-white shadow-xl shadow-primary/20">
