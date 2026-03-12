@@ -23,9 +23,9 @@ import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseProviderProps {
   children: ReactNode;
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
+  firebaseApp: FirebaseApp | null;
+  firestore: Firestore | null;
+  auth: Auth | null;
 }
 
 interface UserAuthState {
@@ -45,9 +45,9 @@ export interface FirebaseContextState {
 }
 
 export interface FirebaseServicesAndUser {
-  firebaseApp: FirebaseApp;
-  firestore: Firestore | null; // null while anonymous sign-in is in-flight
-  auth: Auth;
+  firebaseApp: FirebaseApp | null; // null during SSR / before client init
+  firestore: Firestore | null;     // null during SSR or while auth is in-flight
+  auth: Auth | null;               // null during SSR / before client init
   user: User | null;
   isUserLoading: boolean;
   userError: Error | null;
@@ -156,25 +156,23 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 export const useFirebase = (): FirebaseServicesAndUser => {
   const context = useContext(FirebaseContext);
 
+  // During SSR, or before FirebaseClientProvider has mounted on the client,
+  // the context is undefined. Return null values so pages can render their
+  // loading states instead of crashing the server-side render.
   if (!context) {
-    throw new Error('useFirebase must be used within FirebaseProvider.');
-  }
-
-  // Only require the app and auth to be initialised — firestore may still be
-  // null while the anonymous sign-in is in-flight (by design).
-  if (
-    !context.areServicesAvailable ||
-    !context.firebaseApp ||
-    !context.auth
-  ) {
-    throw new Error(
-      'Firebase core services not available. Check FirebaseProvider props.'
-    );
+    return {
+      firebaseApp: null,
+      firestore: null,
+      auth: null,
+      user: null,
+      isUserLoading: true,
+      userError: null,
+    };
   }
 
   return {
     firebaseApp: context.firebaseApp,
-    firestore: context.firestore, // may be null while user is loading
+    firestore: context.firestore,
     auth: context.auth,
     user: context.user,
     isUserLoading: context.isUserLoading,
@@ -182,7 +180,7 @@ export const useFirebase = (): FirebaseServicesAndUser => {
   };
 };
 
-export const useAuth = (): Auth => {
+export const useAuth = (): Auth | null => {
   return useFirebase().auth;
 };
 
@@ -192,7 +190,7 @@ export const useFirestore = (): Firestore | null => {
   return context.firestore; // null until user auth is complete
 };
 
-export const useFirebaseApp = (): FirebaseApp => {
+export const useFirebaseApp = (): FirebaseApp | null => {
   return useFirebase().firebaseApp;
 };
 
