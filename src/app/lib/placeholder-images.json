@@ -1,0 +1,47 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "flat-bed",
+      "description": "Flat Bed Industrial Sewing Machine",
+      "imageUrl": "https://picsum.photos/seed/flatbed/400/300",
+      "imageHint": "industrial sewing machine"
+    },
+    {
+      "id": "cylinder-bed",
+      "description": "Cylinder Bed Sewing Machine",
+      "imageUrl": "https://picsum.photos/seed/cylinder/400/300",
+      "imageHint": "cylinder bed machine"
+    },
+    {
+      "id": "high-post",
+      "description": "High Post Industrial Sewing Machine",
+      "imageUrl": "https://picsum.photos/seed/highpost/400/300",
+      "imageHint": "high post machine"
+    },
+    {
+      "id": "ams",
+      "description": "AMS Automated Pattern Machine",
+      "imageUrl": "https://picsum.photos/seed/ams/400/300",
+      "imageHint": "automated machinery"
+    },
+    {
+      "id": "overlock",
+      "description": "Overlock Industrial Sewing Machine",
+      "imageUrl": "https://picsum.photos/seed/overlock/400/300",
+      "imageHint": "overlock machine"
+    },
+    {
+      "id": "embossing",
+      "description": "Industrial Embossing Press",
+      "imageUrl": "https://picsum.photos/seed/emboss/400/300",
+      "imageHint": "embossing machine"
+    },
+    {
+      "id": "pressing",
+      "description": "Industrial Hydraulic Pressing Machine",
+      "imageUrl": "https://picsum.photos/seed/press/400/300",
+      "imageHint": "pressing machine industrial"
+    }
+  ]
+}

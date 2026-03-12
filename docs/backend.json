@@ -1,0 +1,122 @@
+
+{
+  "entities": {
+    "Machine": {
+      "title": "Machine",
+      "type": "object",
+      "description": "Industrial asset tracked by the system.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "serialNumber": { "type": "string" },
+        "type": { "type": "string" },
+        "location": { "type": "string" },
+        "status": { "type": "string" },
+        "lastMaintenanceDate": { "type": "string", "format": "date" },
+        "lastInspectionDate": { "type": "string", "format": "date" },
+        "usageHistory": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["id", "type", "location", "status"]
+    },
+    "Line": {
+      "title": "Line",
+      "type": "object",
+      "description": "Physical production line or floor zone.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "supervisor": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
+    "MachineType": {
+      "title": "MachineType",
+      "type": "object",
+      "description": "Equipment category definition.",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+    "User": {
+      "title": "User",
+      "type": "object",
+      "description": "System user with role-based access.",
+      "properties": {
+        "id": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string" }
+      },
+      "required": ["id", "email", "role"]
+    },
+    "MachineTransfer": {
+      "title": "MachineTransfer",
+      "type": "object",
+      "description": "Log entry for an equipment move.",
+      "properties": {
+        "id": { "type": "string" },
+        "machineId": { "type": "string" },
+        "machineName": { "type": "string" },
+        "fromLocation": { "type": "string" },
+        "toLocation": { "type": "string" },
+        "transferDate": { "type": "string", "format": "date-time" },
+        "requestedBy": { "type": "string" },
+        "authorizedBy": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["machineId", "fromLocation", "toLocation", "transferDate"]
+    },
+    "MaintenanceTask": {
+      "title": "MaintenanceTask",
+      "type": "object",
+      "description": "Scheduled or emergency maintenance job.",
+      "properties": {
+        "id": { "type": "string" },
+        "machineId": { "type": "string" },
+        "machineName": { "type": "string" },
+        "description": { "type": "string" },
+        "priority": { "type": "string", "enum": ["Low", "Medium", "High", "Urgent"] },
+        "scheduledDate": { "type": "string", "format": "date" },
+        "assignedTechnician": { "type": "string" },
+        "status": { "type": "string", "enum": ["Scheduled", "In Progress", "Completed", "Overdue"] }
+      },
+      "required": ["machineId", "description", "priority", "status"]
+    }
+  },
+  "auth": {
+    "providers": ["password", "anonymous"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "#/backend/entities/User",
+      "description": "User profiles"
+    },
+    "/machines/{machineId}": {
+      "schema": "#/backend/entities/Machine",
+      "description": "Equipment master data"
+    },
+    "/lines/{lineId}": {
+      "schema": "#/backend/entities/Line",
+      "description": "Production lines"
+    },
+    "/machineTypes/{typeId}": {
+      "schema": "#/backend/entities/MachineType",
+      "description": "Equipment categories"
+    },
+    "/transfers/{transferId}": {
+      "schema": "#/backend/entities/MachineTransfer",
+      "description": "Movement history"
+    },
+    "/maintenanceTasks/{taskId}": {
+      "schema": "#/backend/entities/MaintenanceTask",
+      "description": "Maintenance job registry"
+    }
+  }
+}
