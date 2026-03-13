@@ -1,12 +1,15 @@
 /**
- * local-store.ts
- * Event-driven localStorage CRUD store — replaces Firestore entirely.
- * Operates only in the browser; SSR calls are no-ops.
+ * local-store.ts  — fetch-based API client
+ *
+ * All reads/writes go through Next.js API routes (/api/[collection]).
+ * Data is stored server-side in data/database.json and is shared across
+ * every device on the same network.
+ *
+ * Public API is intentionally identical to the old localStorage version
+ * (now async) so that local-firestore.ts and all hooks continue to work.
  */
 
-const PREFIX = 'machtrack_';
-
-// ─── Event Emitter ───────────────────────────────────────────────────────────
+// ─── Same-device event emitter (instant UI refresh after a local write) ───────
 
 type Listener = () => void;
 const listeners: Map<string, Set<Listener>> = new Map();
@@ -21,105 +24,92 @@ function emit(collectionName: string) {
   listeners.get(collectionName)?.forEach(fn => fn());
 }
 
-// ─── Core Storage Helpers ─────────────────────────────────────────────────────
+// ─── HTTP helpers ─────────────────────────────────────────────────────────────
 
-function storageKey(collectionName: string): string {
-  return `${PREFIX}${collectionName}`;
+const BASE = '/api';
+
+async function apiFetch(url: string, options?: RequestInit): Promise<any> {
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    throw new Error(
+      `[MachTrack] API ${options?.method ?? 'GET'} ${url} → ${res.status}`
+    );
+  }
+  return res.json();
 }
 
-export function getAll<T = any>(collectionName: string): (T & { id: string })[] {
-  if (typeof window === 'undefined') return [];
+// ─── CRUD ─────────────────────────────────────────────────────────────────────
+
+export async function getAll<T = any>(
+  collectionName: string
+): Promise<(T & { id: string })[]> {
   try {
-    const raw = localStorage.getItem(storageKey(collectionName));
-    return raw ? JSON.parse(raw) : [];
+    return await apiFetch(`${BASE}/${collectionName}`);
   } catch {
     return [];
   }
 }
 
-export function getById<T = any>(
+export async function getById<T = any>(
   collectionName: string,
   id: string
-): (T & { id: string }) | null {
-  return getAll<T>(collectionName).find((item: any) => item.id === id) ?? null;
+): Promise<(T & { id: string }) | null> {
+  const all = await getAll<T>(collectionName);
+  return all.find((item: any) => item.id === id) ?? null;
 }
 
-export function setItem<T = any>(
+export async function setItem<T = any>(
   collectionName: string,
   id: string,
   data: T
-): void {
-  if (typeof window === 'undefined') return;
-  const items = getAll<T>(collectionName).filter((i: any) => i.id !== id);
-  items.push({ ...data, id } as any);
-  localStorage.setItem(storageKey(collectionName), JSON.stringify(items));
+): Promise<void> {
+  await apiFetch(`${BASE}/${collectionName}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...data, id }),
+  });
   emit(collectionName);
 }
 
-export function updateItem<T = any>(
+export async function updateItem<T = any>(
   collectionName: string,
   id: string,
   partial: Partial<T>
-): void {
-  if (typeof window === 'undefined') return;
-  const items = getAll<T>(collectionName).map((item: any) =>
-    item.id === id ? { ...item, ...partial } : item
-  );
-  localStorage.setItem(storageKey(collectionName), JSON.stringify(items));
+): Promise<void> {
+  await apiFetch(`${BASE}/${collectionName}/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(partial),
+  });
   emit(collectionName);
 }
 
-export function deleteItem(collectionName: string, id: string): void {
-  if (typeof window === 'undefined') return;
-  const items = getAll(collectionName).filter((item: any) => item.id !== id);
-  localStorage.setItem(storageKey(collectionName), JSON.stringify(items));
+export async function deleteItem(
+  collectionName: string,
+  id: string
+): Promise<void> {
+  await apiFetch(`${BASE}/${collectionName}/${id}`, { method: 'DELETE' });
   emit(collectionName);
 }
 
-export function addItem<T = any>(collectionName: string, data: T): string {
+export async function addItem<T = any>(
+  collectionName: string,
+  data: T
+): Promise<string> {
   const id =
     Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
-  setItem(collectionName, id, data);
+  await apiFetch(`${BASE}/${collectionName}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...data, id }),
+  });
+  emit(collectionName);
   return id;
 }
 
-// ─── Initialize Empty Collections ────────────────────────────────────────────
-
-// Bump this version string any time a breaking data-schema change requires a
-// clean slate. On first load after a version bump every collection is wiped so
-// no stale seed / demo data survives across deployments.
-const SCHEMA_VERSION = '3';
-const SCHEMA_KEY = 'machtrack_schema_v';
-
-function initEmpty(collectionName: string): void {
-  if (typeof window === 'undefined') return;
-  const key = storageKey(collectionName);
-  if (localStorage.getItem(key) === null) {
-    localStorage.setItem(key, JSON.stringify([]));
-  }
-}
+// ─── No-op bootstrap (data lives on the server, nothing to initialise here) ───
 
 export function seedAllCollections(): void {
-  if (typeof window === 'undefined') return;
-
-  // If the stored schema version doesn't match, wipe all collections so that
-  // previously seeded demo data is removed. User data added after this
-  // migration will persist as normal.
-  if (localStorage.getItem(SCHEMA_KEY) !== SCHEMA_VERSION) {
-    const collections = [
-      'machines', 'lines', 'transfers', 'maintenanceTasks',
-      'machineTypes', 'users',
-    ];
-    collections.forEach(c => localStorage.setItem(storageKey(c), JSON.stringify([])));
-    localStorage.setItem(SCHEMA_KEY, SCHEMA_VERSION);
-    console.info('[MachTrack] Storage migrated to v' + SCHEMA_VERSION + ' — demo data cleared.');
-  }
-
-  // Ensure all keys exist (no-op if they were just created above or already exist).
-  initEmpty('machines');
-  initEmpty('lines');
-  initEmpty('transfers');
-  initEmpty('maintenanceTasks');
-  initEmpty('machineTypes');
-  initEmpty('users');
+  // No-op: data is stored in data/database.json on the Next.js server.
+  // API routes create the file automatically on first request.
 }

@@ -109,25 +109,25 @@ export function orderBy(
 // ─── CRUD (async to match firebase/firestore signature) ───────────────────────
 
 export async function setDoc(ref: LocalDocRef, data: any): Promise<void> {
-  store.setItem(ref._collection, ref._id, data);
+  await store.setItem(ref._collection, ref._id, data);
 }
 
 export async function updateDoc(
   ref: LocalDocRef,
   data: Partial<any>
 ): Promise<void> {
-  store.updateItem(ref._collection, ref._id, data);
+  await store.updateItem(ref._collection, ref._id, data);
 }
 
 export async function deleteDoc(ref: LocalDocRef): Promise<void> {
-  store.deleteItem(ref._collection, ref._id);
+  await store.deleteItem(ref._collection, ref._id);
 }
 
 export async function addDoc(
   ref: LocalCollectionRef,
   data: any
 ): Promise<LocalDocRef> {
-  const id = store.addItem(ref._collection, data);
+  const id = await store.addItem(ref._collection, data);
   return doc(null, ref._collection, id);
 }
 

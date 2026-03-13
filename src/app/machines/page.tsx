@@ -546,15 +546,16 @@ export default function MachineMasterPage() {
           Data Storage Info
         </summary>
         <div className="mt-3 space-y-1 font-mono text-[11px]">
-          <p className="font-bold text-slate-500 mb-2">All data is saved in browser localStorage:</p>
-          <p>📍 DevTools → Application → Local Storage → <span className="text-blue-500">http://localhost:9002</span></p>
+          <p className="font-bold text-slate-500 mb-2">All data is stored server-side — shared across all devices:</p>
+          <p>📁 File: <span className="text-blue-500">data/database.json</span> (project root)</p>
+          <p>🌐 API: <span className="text-blue-500">http://&lt;server-ip&gt;:9002/api/[collection]</span></p>
           <ul className="mt-2 space-y-1 pl-4">
             {[
-              ['machtrack_machines',         'Registered machines'],
-              ['machtrack_lines',            'Production lines'],
-              ['machtrack_transfers',        'Transfer history'],
-              ['machtrack_maintenanceTasks', 'Maintenance records'],
-              ['machtrack_machineTypes',     'Equipment categories & images'],
+              ['/api/machines',         'Registered machines'],
+              ['/api/lines',            'Production lines'],
+              ['/api/transfers',        'Transfer history'],
+              ['/api/maintenanceTasks', 'Maintenance records'],
+              ['/api/machineTypes',     'Equipment categories & images'],
             ].map(([key, desc]) => (
               <li key={key}><span className="text-blue-600">{key}</span> — {desc}</li>
             ))}
