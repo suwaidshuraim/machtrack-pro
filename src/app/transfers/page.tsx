@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, orderBy } from "firebase/firestore"
+import { collection, query, orderBy } from "@/lib/local-firestore"
 import { Transfer, Machine, Line } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { 

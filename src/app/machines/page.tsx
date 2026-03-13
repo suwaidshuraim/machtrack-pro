@@ -40,7 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection } from "firebase/firestore"
+import { collection } from "@/lib/local-firestore"
 import { Machine, MachineType } from "@/lib/types"
 import { cn } from "@/lib/utils"
 

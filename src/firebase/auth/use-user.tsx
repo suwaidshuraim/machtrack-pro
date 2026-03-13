@@ -1,23 +1,8 @@
-
 'use client';
-
-import { useState, useEffect } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { useAuth } from '../provider';
-
+// Firebase auth removed - returns a static mock user for local-only mode.
 export function useUser() {
-  const auth = useAuth();
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, [auth]);
-
-  return { user, loading };
+  return {
+    user: { displayName: 'Floor Operator', email: 'operator@factory.com', uid: 'local-user' },
+    loading: false,
+  };
 }

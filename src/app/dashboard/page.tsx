@@ -4,8 +4,7 @@
 import { useMemo, useRef, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { useCollection, useMemoFirebase, useFirebase } from "@/firebase"
-import { collection, doc, updateDoc } from "firebase/firestore"
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage"
+import { collection, doc, updateDoc } from "@/lib/local-firestore"
 import { 
   Repeat, 
   LayoutGrid, 
@@ -25,7 +24,7 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 
 export default function DashboardPage() {
-  const { firestore, firebaseApp } = useFirebase()
+  const { firestore } = useFirebase()
   const { toast } = useToast()
   const [uploadingId, setUploadingId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -56,27 +55,21 @@ export default function DashboardPage() {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !firebaseApp || !firestore || !activeTypeId) {
+    if (!file || !firestore || !activeTypeId) {
       toast({ variant: "destructive", title: "Error", description: "Missing required dependencies for upload." })
       return
     }
 
     setUploadingId(activeTypeId)
     try {
-      const storage = getStorage(firebaseApp)
-      const imagePath = `machineTypes/${activeTypeId}/${Date.now()}_${file.name}`
-      const sRef = storageRef(storage, imagePath)
-
-      console.log("Starting upload for:", activeTypeId)
-      const uploadSnapshot = await uploadBytes(sRef, file)
-      console.log("Upload successful:", uploadSnapshot.ref.fullPath)
-      
-      const downloadURL = await getDownloadURL(sRef)
-      console.log("Got download URL:", downloadURL)
-      
+      const downloadURL = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = (ev) => resolve(ev.target?.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
       const typeDocRef = doc(firestore, "machineTypes", activeTypeId)
       await updateDoc(typeDocRef, { imageUrl: downloadURL })
-      console.log("Firestore document updated")
       
       toast({ title: "Success", description: "Machine image updated successfully." })
     } catch (error) {
@@ -86,7 +79,7 @@ export default function DashboardPage() {
         variant: "destructive", 
         title: "Upload Failed", 
         description: errorMessage.includes("permission") 
-          ? "Check Firebase Storage rules and permissions." 
+          ? "Check your permissions." 
           : `Error: ${errorMessage.substring(0, 100)}`
       })
     } finally {

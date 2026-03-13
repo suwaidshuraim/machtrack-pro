@@ -10,16 +10,14 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Save, Loader2, Factory, Camera, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useFirestore, useFirebase } from "@/firebase"
-import { doc, setDoc } from "firebase/firestore"
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage"
+import { useFirestore } from "@/firebase"
+import { doc, setDoc } from "@/lib/local-firestore"
 import Image from "next/image"
 
 export default function AddLinePage() {
   const router = useRouter()
   const { toast } = useToast()
   const firestore = useFirestore()
-  const { firebaseApp } = useFirebase()
   const [isSubmitting, setIsSubmitting] = useState(false)
   
   const [lineName, setLineName] = useState("")
@@ -32,24 +30,16 @@ export default function AddLinePage() {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !firebaseApp) {
-      toast({ variant: "destructive", title: "Error", description: "Firebase app not initialized." })
-      return
-    }
+    if (!file) return
 
     setUploading(true)
     try {
-      const storage = getStorage(firebaseApp)
-      const imagePath = `lines/temp/${Date.now()}_${file.name}`
-      const sRef = storageRef(storage, imagePath)
-
-      console.log("Starting image upload:", imagePath)
-      const uploadSnapshot = await uploadBytes(sRef, file)
-      console.log("Upload successful:", uploadSnapshot.ref.fullPath)
-      
-      const url = await getDownloadURL(sRef)
-      console.log("Download URL obtained:", url)
-      
+      const url = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = (ev) => resolve(ev.target?.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
       setImageUrl(url)
       toast({ title: "Image Uploaded", description: "Line preview is ready." })
     } catch (error) {

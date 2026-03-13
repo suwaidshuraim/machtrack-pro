@@ -10,7 +10,7 @@ import { Factory, Plus, LayoutGrid, ArrowLeft, Search, X, Loader2, Edit2, Trash2
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, doc } from "firebase/firestore"
+import { collection, doc } from "@/lib/local-firestore"
 import { deleteDocumentNonBlocking } from "@/firebase/non-blocking-updates"
 import { Machine, Line } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"

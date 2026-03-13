@@ -24,7 +24,7 @@ import {
   Factory
 } from "lucide-react"
 import { useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase"
-import { doc, collection, query, where } from "firebase/firestore"
+import { doc, collection, query, where } from "@/lib/local-firestore"
 import { Machine, Line } from "@/lib/types"
 import Link from "next/link"
 

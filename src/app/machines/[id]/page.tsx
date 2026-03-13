@@ -28,7 +28,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useFirestore, useDoc, useCollection, useMemoFirebase } from "@/firebase"
-import { doc, updateDoc, collection, query, where } from "firebase/firestore"
+import { doc, updateDoc, collection, query, where } from "@/lib/local-firestore"
 import { Machine, MachineStatus, Transfer } from "@/lib/types"
 import { AIInspectionCard } from "@/components/ai-inspection-card"
 import { cn } from "@/lib/utils"

@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Wrench, Calendar, Clock, User, AlertCircle, Loader2 } from "lucide-react"
 import { useFirestore, useCollection, useMemoFirebase } from "@/firebase"
-import { collection, query, orderBy } from "firebase/firestore"
+import { collection, query, orderBy } from "@/lib/local-firestore"
 import { MaintenanceTask } from "@/lib/types"
 import { cn } from "@/lib/utils"
 

@@ -10,9 +10,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Save, Loader2, Factory, Camera, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { useFirestore, useFirebase, useDoc, useMemoFirebase } from "@/firebase"
-import { doc, updateDoc } from "firebase/firestore"
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage"
+import { useFirestore, useDoc, useMemoFirebase } from "@/firebase"
+import { doc, updateDoc } from "@/lib/local-firestore"
 import Image from "next/image"
 import { Line } from "@/lib/types"
 
@@ -21,7 +20,6 @@ export default function EditLinePage() {
   const params = useParams()
   const { toast } = useToast()
   const firestore = useFirestore()
-  const { firebaseApp } = useFirebase()
   
   const lineRef = useMemoFirebase(() => {
     if (!firestore || !params.id) return null
@@ -50,24 +48,16 @@ export default function EditLinePage() {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !firebaseApp) {
-      toast({ variant: "destructive", title: "Error", description: "Firebase app not initialized." })
-      return
-    }
+    if (!file) return
 
     setUploading(true)
     try {
-      const storage = getStorage(firebaseApp)
-      const imagePath = `lines/${params.id}/${Date.now()}_${file.name}`
-      const sRef = storageRef(storage, imagePath)
-
-      console.log("Starting image upload:", imagePath)
-      const uploadSnapshot = await uploadBytes(sRef, file)
-      console.log("Upload successful:", uploadSnapshot.ref.fullPath)
-      
-      const url = await getDownloadURL(sRef)
-      console.log("Download URL obtained:", url)
-      
+      const url = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = (ev) => resolve(ev.target?.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
       setImageUrl(url)
       
       // Update Firestore immediately if editing existing
