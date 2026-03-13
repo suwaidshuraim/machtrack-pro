@@ -1,9 +1,11 @@
 
-export type MachineStatus = 'Running' | 'Idle' | 'Bank' | 'Breakdown' | 'Repair';
+export type MachineStatus = 'Running' | 'Idle' | 'Bank' | 'Breakdown' | 'Repair' | 'Maintenance' | 'Available';
 
 export interface Machine {
   id: string;
   name: string;
+  brand?: string;
+  modelNo?: string;
   serialNumber: string;
   type: string;
   location: string;

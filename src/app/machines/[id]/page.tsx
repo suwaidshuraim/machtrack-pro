@@ -212,6 +212,39 @@ export default function MachineDetailPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+            <TabsContent value="details" className="mt-4">
+              <Card className="border-none shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Info className="size-5" /> Technical Specs
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { label: 'Machine ID',    value: machine.id },
+                      { label: 'Type',          value: machine.type },
+                      { label: 'Brand',         value: machine.brand || '—' },
+                      { label: 'Model No',      value: machine.modelNo || '—' },
+                      { label: 'Serial Number', value: machine.serialNumber },
+                      { label: 'Location',      value: machine.location },
+                      { label: 'Status',        value: machine.status },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex justify-between items-center text-sm border-b pb-3 last:border-0 last:pb-0">
+                        <span className="text-muted-foreground font-medium">{label}:</span>
+                        <span className="font-black text-slate-800">{value}</span>
+                      </div>
+                    ))}
+                    {machine.usageHistory && (
+                      <div className="pt-2">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Notes</span>
+                        <p className="mt-1 text-sm font-medium text-slate-600">{machine.usageHistory}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
 
@@ -234,7 +267,9 @@ export default function MachineDetailPage() {
                   <SelectContent>
                     <SelectItem value="Running" className="font-bold text-green-600 py-3">Running (Operational)</SelectItem>
                     <SelectItem value="Idle" className="font-bold text-yellow-600 py-3">Idle (Standby)</SelectItem>
+                    <SelectItem value="Maintenance" className="font-bold text-purple-600 py-3">Maintenance</SelectItem>
                     <SelectItem value="Bank" className="font-bold text-blue-600 py-3">Bank (Inventory)</SelectItem>
+                    <SelectItem value="Available" className="font-bold text-blue-400 py-3">Available (Bank)</SelectItem>
                     <SelectItem value="Breakdown" className="font-bold text-red-600 py-3">Breakdown (Immediate)</SelectItem>
                     <SelectItem value="Repair" className="font-bold text-orange-600 py-3">Repair (Workshop)</SelectItem>
                   </SelectContent>

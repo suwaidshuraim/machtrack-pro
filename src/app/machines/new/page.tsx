@@ -26,8 +26,10 @@ export default function AddMachinePage() {
   const [selectedType, setSelectedType] = useState<string>("")
   const [assetId, setAssetId] = useState("...")
   const [serial, setSerial] = useState("")
+  const [brand, setBrand] = useState("")
+  const [modelNo, setModelNo] = useState("")
   const [location, setLocation] = useState("Machine Bank")
-  const [status, setStatus] = useState<MachineStatus>("Bank")
+  const [status, setStatus] = useState<MachineStatus>("Available")
   const [notes, setNotes] = useState("")
 
   const typesQuery = useMemoFirebase(() => {
@@ -47,23 +49,21 @@ export default function AddMachinePage() {
       const prefix = selectedType.split(' ').map(word => word[0].toUpperCase()).join('')
       const nextNum = 100 + Math.floor(Math.random() * 900)
       setAssetId(`${prefix}-${nextNum}`)
-      setSerial(`SN-${prefix}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`)
     }
   }, [selectedType])
 
   const statusOptions = useMemo(() => {
     if (location === "Machine Bank") {
       return [
-        { label: "Available (Bank)", value: "Bank", className: "text-blue-600" },
-        { label: "Repair", value: "Repair", className: "text-orange-600" },
-        { label: "Breakdown", value: "Breakdown", className: "text-red-600" }
+        { label: "Available", value: "Available", className: "text-blue-600" },
+        { label: "Repair",    value: "Repair",    className: "text-orange-600" },
       ]
     }
     return [
-      { label: "Running", value: "Running", className: "text-green-600" },
-      { label: "Idle", value: "Idle", className: "text-yellow-600" },
-      { label: "Breakdown", value: "Breakdown", className: "text-red-600" },
-      { label: "Repair", value: "Repair", className: "text-orange-600" }
+      { label: "Running",     value: "Running",     className: "text-green-600" },
+      { label: "Idle",        value: "Idle",        className: "text-yellow-600" },
+      { label: "Maintenance", value: "Maintenance", className: "text-purple-600" },
+      { label: "Bank",        value: "Bank",        className: "text-blue-600" },
     ]
   }, [location])
 
@@ -83,7 +83,9 @@ export default function AddMachinePage() {
     const machineData = {
       id: assetId,
       name: `${selectedType} ${assetId}`,
-      serialNumber: serial,
+      brand: brand.trim(),
+      modelNo: modelNo.trim(),
+      serialNumber: serial.trim(),
       type: selectedType,
       location: location,
       status: status,
@@ -148,13 +150,39 @@ export default function AddMachinePage() {
               </div>
               <div className="space-y-3">
                 <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Serial Number</Label>
-                <input value={serial} readOnly className="h-14 bg-slate-50 border-none font-mono font-bold text-lg rounded-2xl w-full px-4 focus:outline-none" />
+                <Input
+                  value={serial}
+                  onChange={(e) => setSerial(e.target.value)}
+                  placeholder="e.g. SN12345"
+                  className="h-14 border-2 rounded-2xl font-bold text-base"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label className="font-black text-[10px] uppercase tracking-widest text-blue-600">Brand</Label>
+                <Input
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  placeholder="e.g. Juki"
+                  className="h-14 border-2 rounded-2xl font-bold text-base"
+                />
+              </div>
+              <div className="space-y-3">
+                <Label className="font-black text-[10px] uppercase tracking-widest text-blue-600">Model No</Label>
+                <Input
+                  value={modelNo}
+                  onChange={(e) => setModelNo(e.target.value)}
+                  placeholder="e.g. DDL-8700"
+                  className="h-14 border-2 rounded-2xl font-bold text-base"
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-3">
-                <Label className="font-black text-[10px] uppercase tracking-widest text-blue-600">Placement</Label>
+                <Label className="font-black text-[10px] uppercase tracking-widest text-blue-600">Initial Location</Label>
                 <Select onValueChange={setLocation} value={location} required>
                   <SelectTrigger className="h-14 border-2 rounded-2xl font-bold">
                     <SelectValue placeholder="Select location" />

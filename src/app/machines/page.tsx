@@ -30,7 +30,9 @@ import {
   X,
   Settings,
   Loader2,
-  MapPin
+  MapPin,
+  FileDown,
+  LayoutList,
 } from "lucide-react"
 import { 
   DropdownMenu,
@@ -78,6 +80,8 @@ export default function MachineMasterPage() {
         !s ||
         m.id.toLowerCase().includes(s) || 
         m.type.toLowerCase().includes(s) ||
+        (m.brand ?? '').toLowerCase().includes(s) ||
+        (m.modelNo ?? '').toLowerCase().includes(s) ||
         m.serialNumber.toLowerCase().includes(s) ||
         m.location.toLowerCase().includes(s) ||
         m.status.toLowerCase().includes(s)
@@ -92,13 +96,102 @@ export default function MachineMasterPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Running': return 'bg-emerald-500';
-      case 'Idle': return 'bg-amber-500';
-      case 'Bank': return 'bg-blue-500';
-      case 'Breakdown': return 'bg-red-500';
-      case 'Repair': return 'bg-orange-500';
-      default: return 'bg-slate-400';
+      case 'Running':     return 'bg-emerald-500';
+      case 'Idle':        return 'bg-amber-500';
+      case 'Bank':        return 'bg-blue-500';
+      case 'Available':   return 'bg-blue-400';
+      case 'Breakdown':   return 'bg-red-500';
+      case 'Repair':      return 'bg-orange-500';
+      case 'Maintenance': return 'bg-purple-500';
+      default:            return 'bg-slate-400';
     }
+  }
+
+  const exportMachinesPDF = async () => {
+    const jsPDF = (await import('jspdf')).default
+    const autoTable = (await import('jspdf-autotable')).default
+    const doc = new jsPDF({ orientation: 'landscape' })
+    doc.setFontSize(16)
+    doc.text('Machine Master Register', 14, 18)
+    doc.setFontSize(10)
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 26)
+    autoTable(doc, {
+      startY: 32,
+      head: [['Machine Name', 'Brand', 'Model No', 'Serial No', 'Status', 'Location']],
+      body: (machines ?? []).map(m => [
+        m.name || m.type,
+        m.brand ?? '',
+        m.modelNo ?? '',
+        m.serialNumber ?? '',
+        m.status,
+        m.location,
+      ]),
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [30, 64, 175], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [241, 245, 249] },
+    })
+    doc.save('machine-master-register.pdf')
+  }
+
+  const exportLineWiseReport = async () => {
+    const jsPDF = (await import('jspdf')).default
+    const autoTable = (await import('jspdf-autotable')).default
+    const doc = new jsPDF({ orientation: 'landscape' })
+    doc.setFontSize(16)
+    doc.text('Line-wise Machine Report', 14, 18)
+    doc.setFontSize(10)
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 26)
+
+    const grouped = new Map<string, Machine[]>()
+    const locationOrder = ['Line 01', 'Line 02', 'Line 03', 'Line 04', 'Machine Bank']
+    const allMachines = machines ?? []
+    
+    allMachines.forEach(m => {
+      if (!grouped.has(m.location)) grouped.set(m.location, [])
+      grouped.get(m.location)!.push(m)
+    })
+    
+    // Sort by predefined order then alphabetical for unknowns
+    const sortedLocations = [...grouped.keys()].sort((a, b) => {
+      const ai = locationOrder.indexOf(a)
+      const bi = locationOrder.indexOf(b)
+      if (ai !== -1 && bi !== -1) return ai - bi
+      if (ai !== -1) return -1
+      if (bi !== -1) return 1
+      return a.localeCompare(b)
+    })
+
+    let startY = 34
+    sortedLocations.forEach((loc, idx) => {
+      const group = grouped.get(loc)!
+      if (idx > 0) startY += 4
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'bold')
+      doc.text(loc, 14, startY)
+      doc.setFont('helvetica', 'normal')
+      startY += 2
+      autoTable(doc, {
+        startY,
+        head: [['Machine Name', 'Brand', 'Model No', 'Serial No', 'Status']],
+        body: group.map(m => [
+          m.name || m.type,
+          m.brand ?? '',
+          m.modelNo ?? '',
+          m.serialNumber ?? '',
+          m.status,
+        ]),
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [71, 85, 105], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: 14, right: 14 },
+      })
+      startY = (doc as any).lastAutoTable.finalY + 8
+      if (startY > 180 && idx < sortedLocations.length - 1) {
+        doc.addPage()
+        startY = 20
+      }
+    })
+    doc.save('line-wise-machine-report.pdf')
   }
 
   const clearFilters = () => {
@@ -133,6 +226,14 @@ export default function MachineMasterPage() {
               <Settings className="mr-2 size-4" />
               Types
             </Link>
+          </Button>
+          <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 md:h-11 shrink-0" onClick={exportMachinesPDF}>
+            <FileDown className="mr-2 size-4" />
+            Export PDF
+          </Button>
+          <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 md:h-11 shrink-0" onClick={exportLineWiseReport}>
+            <LayoutList className="mr-2 size-4" />
+            Line Report
           </Button>
           <Button size="sm" className="bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg h-9 md:h-11 px-4 md:px-6 font-bold shrink-0" asChild>
             <Link href="/machines/new">
@@ -176,7 +277,9 @@ export default function MachineMasterPage() {
                     <DropdownMenuRadioItem value="All">All Statuses</DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="Running">Running</DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="Idle">Idle</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="Maintenance">Maintenance</DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="Bank">Bank</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="Available">Available</DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="Breakdown">Breakdown</DropdownMenuRadioItem>
                     <DropdownMenuRadioItem value="Repair">Repair</DropdownMenuRadioItem>
                   </DropdownMenuRadioGroup>
@@ -231,8 +334,11 @@ export default function MachineMasterPage() {
                 <Table>
                   <TableHeader className="bg-slate-50/50">
                     <TableRow className="border-none">
-                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 pl-6">ID / Serial</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest py-4 pl-6">ID</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest">Type</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest">Brand</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest">Model No</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-widest">Serial No</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest">Location</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-widest">Status</TableHead>
                       <TableHead className="text-right pr-8 font-black text-[10px] uppercase tracking-widest">Details</TableHead>
@@ -242,12 +348,12 @@ export default function MachineMasterPage() {
                     {filteredMachines.map((machine) => (
                       <TableRow key={machine.id} className="hover:bg-blue-50/30 transition-colors border-slate-50">
                         <TableCell className="py-4 pl-6">
-                          <div className="flex flex-col">
-                            <span className="font-black text-xs text-primary tracking-tighter">{machine.id}</span>
-                            <span className="text-[9px] font-bold text-slate-400 uppercase">{machine.serialNumber}</span>
-                          </div>
+                          <span className="font-black text-xs text-primary tracking-tighter">{machine.id}</span>
                         </TableCell>
                         <TableCell className="font-bold text-sm text-slate-700">{machine.type}</TableCell>
+                        <TableCell className="font-semibold text-sm text-slate-600">{machine.brand ?? <span className="text-slate-300">—</span>}</TableCell>
+                        <TableCell className="font-mono text-xs text-slate-600">{machine.modelNo ?? <span className="text-slate-300">—</span>}</TableCell>
+                        <TableCell className="font-mono text-[11px] text-slate-500">{machine.serialNumber}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200 font-black text-[9px] uppercase px-3 py-1">
                             {machine.location}
