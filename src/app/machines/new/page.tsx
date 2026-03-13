@@ -128,7 +128,7 @@ export default function AddMachinePage() {
             <CardTitle className="text-xl font-black">Technical Specifications</CardTitle>
             <CardDescription>Define identifying characteristics and initial placement.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-8 pt-8 px-8">
+          <CardContent className="space-y-8 pt-8 px-4 md:px-8">
             <div className="space-y-3">
               <Label className="font-black text-[10px] uppercase tracking-widest text-blue-600">Equipment Category</Label>
               <Select onValueChange={setSelectedType} required>
@@ -143,7 +143,7 @@ export default function AddMachinePage() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Machine ID</Label>
                 <input value={assetId} readOnly className="h-14 bg-slate-50 border-none font-mono text-blue-600 font-black text-lg rounded-2xl w-full px-4 focus:outline-none" />
@@ -159,7 +159,7 @@ export default function AddMachinePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <Label className="font-black text-[10px] uppercase tracking-widest text-blue-600">Brand</Label>
                 <Input
@@ -223,7 +223,7 @@ export default function AddMachinePage() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex gap-4 justify-end border-t bg-slate-50/50 p-8">
+          <CardFooter className="flex gap-4 justify-end border-t bg-slate-50/50 p-4 md:p-8">
             <Button type="button" variant="outline" onClick={() => router.back()} className="h-14 px-8 rounded-2xl">Cancel</Button>
             <Button 
               type="submit" 

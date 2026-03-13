@@ -194,6 +194,123 @@ export default function MachineMasterPage() {
     doc.save('line-wise-machine-report.pdf')
   }
 
+  const exportFactoryStatusReport = async () => {
+    const jsPDF = (await import('jspdf')).default
+    const autoTable = (await import('jspdf-autotable')).default
+    const doc = new jsPDF({ orientation: 'landscape' })
+    const allMachines = machines ?? []
+    const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+
+    // ── Header ──
+    doc.setFillColor(30, 64, 175)
+    doc.rect(0, 0, 297, 22, 'F')
+    doc.setFontSize(18)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(255, 255, 255)
+    doc.text('FACTORY MACHINE STATUS REPORT', 14, 14)
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.text(`Generated: ${date}`, 250, 14)
+
+    // ── Summary section ──
+    doc.setTextColor(30, 64, 175)
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.text('TOTAL MACHINE SUMMARY', 14, 32)
+    doc.setDrawColor(30, 64, 175)
+    doc.line(14, 34, 283, 34)
+
+    const counts = {
+      total:       allMachines.length,
+      running:     allMachines.filter(m => m.status === 'Running').length,
+      idle:        allMachines.filter(m => m.status === 'Idle').length,
+      maintenance: allMachines.filter(m => m.status === 'Maintenance').length,
+      repair:      allMachines.filter(m => m.status === 'Repair').length,
+      breakdown:   allMachines.filter(m => m.status === 'Breakdown').length,
+      bank:        allMachines.filter(m => m.location === 'Machine Bank').length,
+      available:   allMachines.filter(m => m.status === 'Available').length,
+    }
+
+    const summaryRows = [
+      ['Total Machines', String(counts.total)],
+      ['Running',        String(counts.running)],
+      ['Idle',           String(counts.idle)],
+      ['Maintenance',    String(counts.maintenance)],
+      ['Repair',         String(counts.repair)],
+      ['Breakdown',      String(counts.breakdown)],
+      ['Machine Bank',   String(counts.bank)],
+      ['Available',      String(counts.available)],
+    ]
+
+    autoTable(doc, {
+      startY: 37,
+      head: [['Category', 'Count']],
+      body: summaryRows,
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [30, 64, 175], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [241, 245, 249] },
+      columnStyles: { 1: { halign: 'center', fontStyle: 'bold' } },
+      tableWidth: 80,
+      margin: { left: 14 },
+    })
+
+    // ── Line / Location sections ──
+    const grouped = new Map<string, Machine[]>()
+    allMachines.forEach(m => {
+      if (!grouped.has(m.location)) grouped.set(m.location, [])
+      grouped.get(m.location)!.push(m)
+    })
+    const locationOrder = ['Line 01','Line 02','Line 03','Line 04','Machine Bank']
+    const sortedLocations = [...grouped.keys()].sort((a, b) => {
+      const ai = locationOrder.indexOf(a), bi = locationOrder.indexOf(b)
+      if (ai !== -1 && bi !== -1) return ai - bi
+      if (ai !== -1) return -1
+      if (bi !== -1) return 1
+      return a.localeCompare(b)
+    })
+
+    let y = (doc as any).lastAutoTable.finalY + 12
+
+    sortedLocations.forEach((loc) => {
+      const group = grouped.get(loc)!
+      if (y > 180) { doc.addPage(); y = 20 }
+      doc.setTextColor(30, 64, 175)
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'bold')
+      doc.text(loc.toUpperCase(), 14, y)
+      doc.setDrawColor(203, 213, 225)
+      doc.line(14, y + 2, 283, y + 2)
+      autoTable(doc, {
+        startY: y + 5,
+        head: [['Machine Name', 'Brand', 'Model No', 'Serial No', 'Status']],
+        body: group.map(m => [
+          m.name || m.type,
+          m.brand ?? '',
+          m.modelNo ?? '',
+          m.serialNumber ?? '',
+          m.status,
+        ]),
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [71, 85, 105], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        margin: { left: 14, right: 14 },
+      })
+      y = (doc as any).lastAutoTable.finalY + 10
+    })
+
+    // ── Footer ──
+    const pageCount = (doc as any).internal.getNumberOfPages()
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i)
+      doc.setFontSize(8)
+      doc.setTextColor(148, 163, 184)
+      doc.setFont('helvetica', 'normal')
+      doc.text(`MachTrack Pro  |  Page ${i} of ${pageCount}  |  ${date}`, 14, 205)
+    }
+
+    doc.save(`factory-machine-status-report-${new Date().toISOString().split('T')[0]}.pdf`)
+  }
+
   const clearFilters = () => {
     setSearch("")
     setStatusFilter("All")
@@ -234,6 +351,10 @@ export default function MachineMasterPage() {
           <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 md:h-11 shrink-0" onClick={exportLineWiseReport}>
             <LayoutList className="mr-2 size-4" />
             Line Report
+          </Button>
+          <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 md:h-11 shrink-0 border-blue-200 text-blue-700 hover:bg-blue-50" onClick={exportFactoryStatusReport}>
+            <FileDown className="mr-2 size-4" />
+            Factory Report
           </Button>
           <Button size="sm" className="bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg h-9 md:h-11 px-4 md:px-6 font-bold shrink-0" asChild>
             <Link href="/machines/new">
@@ -330,7 +451,7 @@ export default function MachineMasterPage() {
           ) : (
             <>
               {/* Desktop Table View */}
-              <div className="hidden md:block">
+              <div className="hidden md:block overflow-x-auto">
                 <Table>
                   <TableHeader className="bg-slate-50/50">
                     <TableRow className="border-none">
@@ -416,6 +537,29 @@ export default function MachineMasterPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Developer Storage Info */}
+      <details className="text-xs text-slate-400 border border-dashed border-slate-200 rounded-2xl p-4">
+        <summary className="cursor-pointer font-black uppercase tracking-widest text-[10px] text-slate-400 select-none">
+          Data Storage Info
+        </summary>
+        <div className="mt-3 space-y-1 font-mono text-[11px]">
+          <p className="font-bold text-slate-500 mb-2">All data is saved in browser localStorage:</p>
+          <p>📍 DevTools → Application → Local Storage → <span className="text-blue-500">http://localhost:9002</span></p>
+          <ul className="mt-2 space-y-1 pl-4">
+            {[
+              ['machtrack_machines',         'Registered machines'],
+              ['machtrack_lines',            'Production lines'],
+              ['machtrack_transfers',        'Transfer history'],
+              ['machtrack_maintenanceTasks', 'Maintenance records'],
+              ['machtrack_machineTypes',     'Equipment categories & images'],
+            ].map(([key, desc]) => (
+              <li key={key}><span className="text-blue-600">{key}</span> — {desc}</li>
+            ))}
+          </ul>
+          <p className="mt-2 text-slate-400">Example: {'{ id, name, brand, modelNo, serialNumber, type, location, status }'}</p>
+        </div>
+      </details>
     </div>
   )
 }
