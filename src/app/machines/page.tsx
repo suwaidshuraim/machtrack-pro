@@ -173,13 +173,17 @@ export default function MachineMasterPage() {
       autoTable(doc, {
         startY,
         head: [['Machine Name', 'Brand', 'Model No', 'Serial No', 'Status']],
-        body: group.map(m => [
-          m.name || m.type,
-          m.brand ?? '',
-          m.modelNo ?? '',
-          m.serialNumber ?? '',
-          m.status,
-        ]),
+        body: [
+          ...group.map(m => [
+            m.name || m.type,
+            m.brand ?? '',
+            m.modelNo ?? '',
+            m.serialNumber ?? '',
+            m.status,
+          ]),
+        ],
+        foot: [[{ content: `Total Machines in ${loc}: ${group.length}`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fillColor: [241, 245, 249], textColor: [30, 64, 175] } }]],
+        showFoot: 'lastPage',
         styles: { fontSize: 9, cellPadding: 3 },
         headStyles: { fillColor: [71, 85, 105], textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [248, 250, 252] },
@@ -290,6 +294,8 @@ export default function MachineMasterPage() {
           m.serialNumber ?? '',
           m.status,
         ]),
+        foot: [[{ content: `Total Machines in ${loc}: ${group.length}`, colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fillColor: [241, 245, 249], textColor: [30, 64, 175] } }]],
+        showFoot: 'lastPage',
         styles: { fontSize: 8, cellPadding: 3 },
         headStyles: { fillColor: [71, 85, 105], textColor: 255, fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [248, 250, 252] },
@@ -343,10 +349,6 @@ export default function MachineMasterPage() {
               <Settings className="mr-2 size-4" />
               Types
             </Link>
-          </Button>
-          <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 md:h-11 shrink-0" onClick={exportMachinesPDF}>
-            <FileDown className="mr-2 size-4" />
-            Export PDF
           </Button>
           <Button variant="outline" size="sm" className="rounded-xl font-bold h-9 md:h-11 shrink-0" onClick={exportLineWiseReport}>
             <LayoutList className="mr-2 size-4" />
