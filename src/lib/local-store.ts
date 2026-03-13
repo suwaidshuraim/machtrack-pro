@@ -85,6 +85,12 @@ export function addItem<T = any>(collectionName: string, data: T): string {
 
 // ─── Initialize Empty Collections ────────────────────────────────────────────
 
+// Bump this version string any time a breaking data-schema change requires a
+// clean slate. On first load after a version bump every collection is wiped so
+// no stale seed / demo data survives across deployments.
+const SCHEMA_VERSION = '3';
+const SCHEMA_KEY = 'machtrack_schema_v';
+
 function initEmpty(collectionName: string): void {
   if (typeof window === 'undefined') return;
   const key = storageKey(collectionName);
@@ -94,8 +100,22 @@ function initEmpty(collectionName: string): void {
 }
 
 export function seedAllCollections(): void {
-  // Initialize all collections as empty arrays on first load.
-  // No demo/seed data — all data is entered by the user and persists in localStorage.
+  if (typeof window === 'undefined') return;
+
+  // If the stored schema version doesn't match, wipe all collections so that
+  // previously seeded demo data is removed. User data added after this
+  // migration will persist as normal.
+  if (localStorage.getItem(SCHEMA_KEY) !== SCHEMA_VERSION) {
+    const collections = [
+      'machines', 'lines', 'transfers', 'maintenanceTasks',
+      'machineTypes', 'users',
+    ];
+    collections.forEach(c => localStorage.setItem(storageKey(c), JSON.stringify([])));
+    localStorage.setItem(SCHEMA_KEY, SCHEMA_VERSION);
+    console.info('[MachTrack] Storage migrated to v' + SCHEMA_VERSION + ' — demo data cleared.');
+  }
+
+  // Ensure all keys exist (no-op if they were just created above or already exist).
   initEmpty('machines');
   initEmpty('lines');
   initEmpty('transfers');
