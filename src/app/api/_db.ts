@@ -2,6 +2,9 @@
  * _db.ts — server-side JSON file database helper.
  * Used by all /api/[collection] route handlers.
  * File path: <project-root>/data/database.json
+ *
+ * Note: on Vercel (serverless / read-only FS) writeDB is a no-op.
+ * Data persistence only works when running the local Next.js dev server.
  */
 
 import fs from 'fs';
@@ -46,7 +49,12 @@ export function readDB(): Record<string, any[]> {
 }
 
 export function writeDB(db: Record<string, any[]>): void {
-  const dir = path.dirname(DB_PATH);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), 'utf-8');
+  try {
+    const dir = path.dirname(DB_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), 'utf-8');
+  } catch {
+    // Vercel / read-only filesystem — writes are silently ignored.
+    // Data persistence only works on the local dev server.
+  }
 }

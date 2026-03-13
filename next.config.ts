@@ -2,6 +2,10 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // Bundle the data/ directory so API routes can read database.json on Vercel.
+  outputFileTracingIncludes: {
+    '/api/(.*)': ['./data/**'],
+  },
   async redirects() {
     return [
       {

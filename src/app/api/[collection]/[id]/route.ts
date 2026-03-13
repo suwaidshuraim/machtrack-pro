@@ -9,6 +9,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readDB, writeDB, VALID_COLLECTIONS } from '../../_db';
 
+export const runtime = 'nodejs';
+
 type RouteContext = { params: Promise<{ collection: string; id: string }> };
 
 /** Full replace */
